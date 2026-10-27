@@ -1,0 +1,1212 @@
+<title>IR Event Outcomes</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: sticky control rail + tab strip over a single 1200px work column; summary first, detail in tabs. */
+:root{
+  --bg:#f3f5f7; --surface:#ffffff; --sunk:#e9edf1; --ink:#15202b; --muted:#5a6776; --line:#d9dfe6;
+  --accent:#1d4f7a; --accent-ink:#ffffff;
+  --e1:#2f6db5; --e2:#b8761a; --e3:#25897a; --ctl:#8a96a3;
+  --good:#2b7a4b; --warn:#a8650a; --bad:#b0372e; --good-bg:#e3f1e8; --warn-bg:#fbefdc; --bad-bg:#f8e3e1;
+  --c1:#2f6db5; --c2:#b8761a; --c3:#25897a; --c4:#8a4f9e; --c5:#c2524a; --c6:#6b7f2a;
+  --f-display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0e1419; --surface:#151d25; --sunk:#1c2630; --ink:#e4e9ee; --muted:#93a1af; --line:#28333f;
+  --accent:#86b6e6; --accent-ink:#0e1419;
+  --e1:#6fa3e6; --e2:#e0a24a; --e3:#4cbfa8; --ctl:#7d8996;
+  --good:#5cc08a; --warn:#e3a74c; --bad:#ef7a70; --good-bg:#16301f; --warn-bg:#33270f; --bad-bg:#3a1c1a;
+  --c1:#6fa3e6; --c2:#e0a24a; --c3:#4cbfa8; --c4:#b88ad0; --c5:#ec8a80; --c6:#a8bf5a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1419; --surface:#151d25; --sunk:#1c2630; --ink:#e4e9ee; --muted:#93a1af; --line:#28333f;
+  --accent:#86b6e6; --accent-ink:#0e1419;
+  --e1:#6fa3e6; --e2:#e0a24a; --e3:#4cbfa8; --ctl:#7d8996;
+  --good:#5cc08a; --warn:#e3a74c; --bad:#ef7a70; --good-bg:#16301f; --warn-bg:#33270f; --bad-bg:#3a1c1a;
+  --c1:#6fa3e6; --c2:#e0a24a; --c3:#4cbfa8; --c4:#b88ad0; --c5:#ec8a80; --c6:#a8bf5a; color-scheme:dark}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+.wrap{max-width:1200px;margin:0 auto}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:.005em}
+.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.eyebrow{font-family:var(--f-display);font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:600}
+a{color:var(--accent)}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+
+/* header */
+header.top{padding-block:24px 12px;display:flex;flex-wrap:wrap;gap:8px 24px;align-items:end;justify-content:space-between}
+header.top h1{font-size:30px;font-weight:700}
+header.top p{margin:4px 0 0;color:var(--muted);max-width:62ch}
+.asof{font-size:13px;color:var(--muted)}
+
+/* sticky controls + tabs */
+.rail{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:8px 0;margin-inline:-4px;padding-inline:4px}
+.controls{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 14px}
+.ctl{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ctl label,.ctl .lab{font-size:12px;font-family:var(--f-display);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
+input[type=range]{width:160px;accent-color:var(--accent)}
+.win-out{min-width:64px;font-family:var(--f-mono);font-weight:500}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--sunk)}
+.seg button{border:0;background:transparent;padding:5px 11px;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex:none}
+.switch{display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:13px}
+.switch input{width:16px;height:16px;accent-color:var(--accent)}
+.chips{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;margin-top:8px;font-size:13px}
+.chips .lab{font-size:12px;font-family:var(--f-display);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;margin-right:2px}
+.fchip{display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--accent);color:var(--ink);border-radius:999px;padding:2px 4px 2px 10px}
+.fchip button{border:0;background:var(--sunk);border-radius:50%;width:20px;height:20px;line-height:18px;cursor:pointer;color:var(--muted);padding:0}
+.fchip button:hover{color:var(--ink)}
+.chips .clear{border:0;background:none;color:var(--accent);cursor:pointer;text-decoration:underline;font-size:13px}
+.tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:thin;margin-top:8px;border-bottom:1px solid var(--line)}
+.tabs button{border:0;background:none;padding:10px 14px;cursor:pointer;font-family:var(--f-display);font-weight:600;font-size:14px;color:var(--muted);white-space:nowrap;border-bottom:3px solid transparent;margin-bottom:-1px}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tabs button:hover{color:var(--ink)}
+
+main{padding-top:20px}
+section.panel{display:grid;gap:20px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;min-width:0}
+.card h3{font-size:17px;font-weight:600}
+.card .sub{color:var(--muted);font-size:13px;margin:3px 0 12px;max-width:70ch}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+@media (max-width:860px){.grid2{grid-template-columns:minmax(0,1fr)}}
+.chart{position:relative;height:280px}
+.chart.tall{height:340px}
+.card-head{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 16px;align-items:start}
+
+/* KPI tiles */
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:860px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:grid;gap:4px;align-content:start}
+.kpi .v{font-family:var(--f-mono);font-size:26px;font-weight:500;font-variant-numeric:tabular-nums;line-height:1.15}
+.kpi .d{font-size:13px;color:var(--muted)}
+
+/* scorecard */
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th{font-family:var(--f-display);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:10px;border-bottom:1px solid var(--line);vertical-align:top}
+td.r,th.r{text-align:right}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:var(--sunk)}
+tbody tr.sel{background:var(--sunk);box-shadow:inset 3px 0 0 var(--accent)}
+.ev-name{font-weight:600;display:flex;align-items:center;gap:8px}
+.ev-meta{font-size:12px;color:var(--muted)}
+.chip{display:inline-block;font-size:12px;padding:2px 8px;border-radius:999px;font-family:var(--f-body);font-weight:500;white-space:nowrap}
+.chip.good{background:var(--good-bg);color:var(--good)} .chip.warn{background:var(--warn-bg);color:var(--warn)} .chip.bad{background:var(--bad-bg);color:var(--bad)}
+.chip.neutral{background:var(--sunk);color:var(--muted)}
+
+/* findings */
+.findings{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+@media (max-width:860px){.findings{grid-template-columns:minmax(0,1fr)}}
+.findings ol{margin:10px 0 0;padding-left:20px;display:grid;gap:12px}
+.findings li{max-width:68ch}
+.findings li b{font-weight:600}
+.caveat{border:1px solid var(--line);border-left:4px solid var(--warn);background:var(--surface);border-radius:8px;padding:12px 16px;font-size:14px}
+.caveat b{color:var(--warn)}
+.stub{border:1px dashed var(--line);border-radius:10px;padding:40px 20px;text-align:center;color:var(--muted)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.note{font-size:12px;color:var(--muted);margin-top:8px}
+/* map */
+/*__LEAFLET_CSS__*/
+.map{height:480px;border-radius:8px;border:1px solid var(--line);overflow:hidden;background:var(--sunk);z-index:0}
+@media (max-width:600px){.map{height:360px}}
+.leaflet-container{background:var(--sunk);font-family:var(--f-body)}
+.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:var(--surface);color:var(--ink);box-shadow:0 4px 18px #0003}
+.leaflet-popup-content{margin:12px 14px;font-size:13px;line-height:1.45}
+.leaflet-popup-content b{font-family:var(--f-display);font-size:15px}
+.leaflet-tooltip{background:var(--surface);color:var(--ink);border:1px solid var(--line);box-shadow:none;font-size:12px}
+.leaflet-tooltip.rlab{background:transparent;border:0;font-family:var(--f-display);font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.leaflet-tooltip.rlab::before{display:none}
+.leaflet-bar a{background:var(--surface);color:var(--ink);border-color:var(--line)}
+.leaflet-control-attribution{background:var(--surface)!important;color:var(--muted)}
+.leaflet-control-attribution a{color:var(--accent)}
+.map.dark-tiles .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.85) contrast(.9)}
+.map-foot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 16px;margin-top:10px;align-items:center}
+.map-foot .note{margin:0}
+.ptbl{border-collapse:collapse;margin-top:6px;font-size:12px}
+.ptbl td{padding:2px 10px 2px 0;border:0}
+.ptbl td+td{text-align:right;font-family:var(--f-mono)}
+table.static tbody tr{cursor:default}
+.sub-controls{position:static}
+/* details, quality, dictionary */
+select,input[type=search]{font:inherit;font-size:13px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:5px 8px}
+input[type=search]{width:200px}
+table.dt th{cursor:pointer;user-select:none}
+table.dt th[aria-sort="ascending"]::after{content:" ▲";font-size:9px}
+table.dt th[aria-sort="descending"]::after{content:" ▼";font-size:9px}
+table.dt td{padding:8px 10px}
+tr.open{background:var(--sunk)}
+tr.detail{cursor:default}
+tr.detail:hover{background:transparent}
+tr.detail>td{background:var(--sunk);padding:14px 16px 18px}
+.fl{display:flex;flex-wrap:wrap;gap:4px;min-width:150px}
+.fl .chip{white-space:normal}
+.tl-svg{width:100%;max-width:960px;height:auto;display:block;min-width:620px}
+.tl-list{display:grid;grid-template-columns:96px 120px minmax(0,1fr);gap:4px 12px;font-size:13px;margin-top:10px;max-width:900px}
+.tl-list .d{font-family:var(--f-mono);color:var(--muted)}
+.stg{display:inline-block;font-size:11px;padding:1px 7px;border-radius:4px;background:var(--surface);border:1px solid var(--line);margin:1px 2px 1px 0;white-space:nowrap}
+.stg.c{border-color:var(--good);color:var(--good)} .stg.x{border-color:var(--bad);color:var(--bad)}
+code{font-family:var(--f-mono);font-size:.9em;background:var(--sunk);padding:1px 5px;border-radius:4px}
+.as-list{margin:8px 0 0;padding-left:18px;display:grid;gap:8px}
+.as-list li{max-width:70ch}
+.dict-card h3 .ev-meta{font-family:var(--f-body);font-weight:400;font-size:13px}
+td.mono{font-family:var(--f-mono);font-size:13px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">Investor Relations · Event review 2026</div>
+      <h1>IR Event Outcomes</h1>
+      <p>What happened after our three investor events, what business outcomes are associated with them, and what to carry into the next event plan.</p>
+    </div>
+    <div class="asof">Data as of <span class="num" id="asof"></span> · synthetic assessment data</div>
+  </header>
+
+  <div class="rail">
+    <div class="controls" role="group" aria-label="Analysis settings">
+      <div class="ctl">
+        <label for="win">Association window</label>
+        <input id="win" type="range" min="15" max="180" step="15" value="90" aria-describedby="win-out">
+        <span class="win-out" id="win-out">90 days</span>
+      </div>
+      <div class="ctl">
+        <span class="lab" id="ev-lab">Event</span>
+        <div class="seg" id="ev-seg" role="group" aria-labelledby="ev-lab"></div>
+      </div>
+      <div class="ctl">
+        <label class="switch" for="tent"><input id="tent" type="checkbox"> Count Tentative attendees</label>
+      </div>
+    </div>
+    <div class="chips" id="chips" role="group" aria-label="Active filters" hidden></div>
+    <nav class="tabs" role="tablist" aria-label="Sections" id="tabs"></nav>
+  </div>
+
+  <main id="main">
+    <!-- SUMMARY -->
+    <section class="panel" id="p-summary" role="tabpanel" aria-label="Executive summary">
+      <div class="kpis" id="kpis"></div>
+      <div class="card">
+        <div class="card-head">
+          <div><h3>Event scorecard</h3><p class="sub">Outcomes for firms that attended, within the selected window after each event. Click a row to focus on that event.</p></div>
+        </div>
+        <div class="tbl-wrap"><table id="scorecard"></table></div>
+      </div>
+      <div class="findings">
+        <div class="card"><h3>What the data shows</h3><ol id="findings"></ol></div>
+        <div class="card"><h3>What to do next</h3><ol id="actions"></ol></div>
+      </div>
+      <div class="caveat"><b>Association, not causation.</b> An opportunity is linked to an event when a firm that attended opens it within the window. Firms are invited because they are already engaged, so these numbers show what happened alongside events, not what the events caused. The comparison with firms that attended no event is the best check this data allows.</div>
+    </section>
+
+    <!-- CHARTS -->
+    <section class="panel" id="p-charts" role="tabpanel" aria-label="Interactive charts" hidden>
+      <div class="grid2">
+        <div class="card">
+          <h3>Pipeline created per $1 of event cost</h3>
+          <p class="sub">New opportunity value from attending firms within the window, divided by event cost. Click a bar to filter everything to that event.</p>
+          <div class="chart"><canvas id="c-ppd" aria-label="Pipeline per dollar by event" role="img"></canvas></div>
+        </div>
+        <div class="card">
+          <h3>Follow-up funnel</h3>
+          <p class="sub">Number of attending firms reaching each step within the window. Hover for the share of attending firms. Click a bar to filter to the firms that reached that step.</p>
+          <div class="chart"><canvas id="c-funnel" role="img" aria-label="Funnel by event"></canvas></div>
+        </div>
+        <div class="card">
+          <h3>Where the pipeline stands today</h3>
+          <p class="sub">Associated new pipeline split by current status. Click a segment to filter to that status and event.</p>
+          <div class="chart"><canvas id="c-status" role="img" aria-label="Pipeline status by event"></canvas></div>
+        </div>
+        <div class="card">
+          <h3>Attendees vs firms at no event</h3>
+          <p class="sub">Share of firms that opened an opportunity in the same window. Non-attendees are the <span id="ctl-n"></span> firms that appear at no event. Click a bar to filter to that event.</p>
+          <div class="chart"><canvas id="c-ctl" role="img" aria-label="Attendee vs non-attendee opportunity rate"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <div><h3>Before vs after the event</h3>
+            <p class="sub">Activity of attending firms in the same number of days before and after. Click a bar to filter to that event.</p></div>
+            <div class="seg" id="pp-seg" role="group" aria-label="Measure"><button type="button" data-v="meet" aria-pressed="true">Meetings</button><button type="button" data-v="opp" aria-pressed="false">Opportunities</button></div>
+          </div>
+          <div class="chart"><canvas id="c-prepost" role="img" aria-label="Before and after activity"></canvas></div>
+        </div>
+        <div class="card">
+          <h3>Does the window change the answer?</h3>
+          <p class="sub">Pipeline per $1 at every window length. Dotted points are not fully observed yet. The vertical line marks the current setting. Click a line to filter to that event.</p>
+          <div class="chart"><canvas id="c-sens" role="img" aria-label="Window sensitivity"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <div><h3>Who the pipeline came from</h3><p class="sub">Associated new pipeline by investor type. Click a segment to filter to that group and event.</p></div>
+            <div class="seg" id="mix-seg" role="group" aria-label="Breakdown"><button type="button" data-v="segment" aria-pressed="true">Segment</button><button type="button" data-v="priority" aria-pressed="false">Tier</button><button type="button" data-v="coverage_region" aria-pressed="false">Region</button></div>
+          </div>
+          <div class="chart"><canvas id="c-mix" role="img" aria-label="Pipeline mix"></canvas></div>
+        </div>
+        <div class="card">
+          <h3>Top firms by associated pipeline</h3>
+          <p class="sub">Largest new pipeline from attending firms. Totals count each opportunity once; a firm credited to two events shows both colors. Click a firm to filter to it.</p>
+          <div class="chart tall"><canvas id="c-firms" role="img" aria-label="Top firms"></canvas></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MAP -->
+    <section class="panel" id="p-map" role="tabpanel" aria-label="Map" hidden>
+      <div class="card">
+        <div class="card-head">
+          <div><h3>Where events ran and where attending firms are covered from</h3>
+          <p class="sub">Event pins sit on the host city. Firms have only a coverage region, so each region is one bubble at an approximate centre. Lines show how many attending firms each region sent to each event. Click any pin or bubble for figures.</p></div>
+          <div class="seg" id="map-seg" role="group" aria-label="Pin size"><button type="button" data-v="pipe" aria-pressed="true">Pipeline</button><button type="button" data-v="cost" aria-pressed="false">Cost</button><button type="button" data-v="ppd" aria-pressed="false">Per $1</button></div>
+        </div>
+        <div id="map" class="map" role="region" aria-label="Map of events and coverage regions"></div>
+        <div class="map-foot">
+          <div class="legend" id="map-legend"></div>
+          <div class="note" id="map-mode">Loading base map…</div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Region by event</h3>
+        <p class="sub">Attending firms and associated new pipeline, by the firm's coverage region. The right-hand columns compare opportunity rates for attending firms and firms at no event in the same region.</p>
+        <div class="tbl-wrap"><table id="region-tbl" class="static"></table></div>
+      </div>
+    </section>
+
+    <!-- TRENDS -->
+    <section class="panel" id="p-trends" role="tabpanel" aria-label="Trends" hidden>
+      <div class="controls sub-controls" role="group" aria-label="Trend settings">
+        <div class="ctl"><span class="lab" id="tr-lab">Measure</span>
+          <div class="seg" id="tr-seg" role="group" aria-labelledby="tr-lab"><button type="button" data-v="meet" aria-pressed="true">Meetings</button><button type="button" data-v="opp" aria-pressed="false">New opportunities</button><button type="button" data-v="pipe" aria-pressed="false">New pipeline</button></div></div>
+        <label class="switch" for="tr-perfirm"><input id="tr-perfirm" type="checkbox" checked> Per firm</label>
+        <label class="switch" for="tr-bulk"><input id="tr-bulk" type="checkbox"> Leave out possible bulk-logged meetings</label>
+      </div>
+      <div class="card">
+        <h3>Monthly activity: attending firms vs firms at no event</h3>
+        <p class="sub">Attending firms are those at the selected event(s). Per-firm view divides by group size so the two groups compare fairly. Dashed lines mark event dates. Click a bar to filter to the firms active that month. <b id="tr-note"></b></p>
+        <div class="chart tall"><canvas id="t-monthly" role="img" aria-label="Monthly activity"></canvas></div>
+      </div>
+      <div class="grid2">
+        <div class="card">
+          <h3>Pipeline build-up around each event</h3>
+          <p class="sub">Cumulative new pipeline from attending firms, from <span class="wtxt"></span> days before to <span class="wtxt"></span> days after. A steeper line after day 0 means pipeline sped up after the event. Click a line to filter to that event.</p>
+          <div class="chart"><canvas id="t-cum" role="img" aria-label="Cumulative pipeline around events"></canvas></div>
+        </div>
+        <div class="card">
+          <h3>How fast opportunities move</h3>
+          <p class="sub">Median days from opportunity creation to Due Diligence and to Committed. Only opportunities that reached the stage count; n shown in brackets. Click an event's bar to filter to it.</p>
+          <div class="chart"><canvas id="t-speed" role="img" aria-label="Stage velocity"></canvas></div>
+        </div>
+        <div class="card">
+          <h3>What the conversations were about</h3>
+          <p class="sub">Meeting purpose for attending firms, <span class="wtxt"></span> days before vs after the event(s). Click a segment to filter to the firms that had that kind of meeting.</p>
+          <div class="chart"><canvas id="t-purpose" role="img" aria-label="Meeting purpose before and after"></canvas></div>
+        </div>
+        <div class="card">
+          <h3>Days to first follow-up meeting</h3>
+          <p class="sub">For each attending firm, days from the event to its next meeting. Firms with no meeting inside the window are counted as "none". Click a bar to filter to those firms.</p>
+          <div class="chart"><canvas id="t-first" role="img" aria-label="Days to first follow-up"></canvas></div>
+        </div>
+      </div>
+    </section>
+    <!-- DETAILS -->
+    <section class="panel" id="p-details" role="tabpanel" aria-label="Data details" hidden>
+      <div class="controls sub-controls" role="group" aria-label="Detail filters">
+        <div class="seg" id="dt-seg" role="group" aria-label="View"><button type="button" data-v="firms" aria-pressed="true">Firms</button><button type="button" data-v="opps" aria-pressed="false">Opportunities</button></div>
+        <div class="ctl"><label for="dt-q">Search</label><input id="dt-q" type="search" placeholder="Firm, ID, fund…" autocomplete="off"></div>
+        <div class="ctl" id="dt-f-firms"><label for="dt-att">Show</label>
+          <select id="dt-att"><option value="all">All firms</option><option value="att">Attended selected event(s)</option><option value="none">Attended no event</option><option value="flag">Has a flag</option></select>
+          <select id="dt-tier" aria-label="Tier"><option value="">All tiers</option><option>Tier 1</option><option>Tier 2</option><option>Tier 3</option></select></div>
+        <div class="ctl" id="dt-f-opps" hidden><label for="dt-st">Show</label>
+          <select id="dt-st"><option value="">All statuses</option><option>Open</option><option>Committed</option><option>Declined</option></select>
+          <select id="dt-link" aria-label="Event link"><option value="">Linked or not</option><option value="y">Linked to selected event(s)</option><option value="n">Not linked</option></select></div>
+        <span class="note" id="dt-count"></span>
+      </div>
+      <div class="card"><div class="tbl-wrap"><table id="dt-tbl" class="dt"></table></div>
+        <p class="note">Click a column heading to sort. Click a firm to open its timeline. Meetings before/after use the selected window around each event the firm attended.</p></div>
+    </section>
+
+    <!-- QUALITY -->
+    <section class="panel" id="p-quality" role="tabpanel" aria-label="Data quality" hidden>
+      <div class="kpis" id="dq-kpis"></div>
+      <div class="card"><h3>Issues found and how each was handled</h3>
+        <p class="sub">Every rule is applied in <code>build_model.py</code> before any number on this page is calculated.</p>
+        <div class="tbl-wrap"><table id="dq-tbl" class="static"></table></div></div>
+      <div class="card"><h3>What cleaning changed</h3>
+        <p class="sub">The same KPIs calculated on the raw files and on the cleaned data, at a 90-day window with Confirmed attendees.</p>
+        <div class="tbl-wrap"><table id="dq-impact" class="static"></table></div></div>
+    </section>
+
+    <!-- ASSUMPTIONS -->
+    <section class="panel" id="p-assumptions" role="tabpanel" aria-label="Assumptions" hidden>
+      <div class="grid2" id="as-grid"></div>
+      <div class="card"><h3>Metric definitions</h3><div class="tbl-wrap"><table id="as-metrics" class="static"></table></div></div>
+    </section>
+
+    <!-- DICTIONARY -->
+    <section class="panel" id="p-dictionary" role="tabpanel" aria-label="Data dictionary" hidden>
+      <div class="card"><h3>How the tables connect</h3>
+        <p class="sub">Firms are the hub. Attendance links firms to events; meetings and opportunities hang off firms and are linked to events by date, through the association window.</p>
+        <div class="tbl-wrap"><svg id="er" viewBox="0 0 760 230" width="760" height="230" role="img" aria-label="Table relationships"></svg></div></div>
+      <div id="dict"></div>
+    </section>
+  </main>
+</div>
+
+<script type="application/json" id="data">__DATA__</script>
+<script type="application/json" id="world">__WORLD__</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script>
+(function(){
+const D = JSON.parse(document.getElementById('data').textContent);
+const DAY = 864e5;
+const ts = s => Date.parse(String(s).slice(0,10)+'T00:00:00Z');
+const AS_OF = ts(D.as_of);
+D.events.forEach(e => e.t = ts(e.event_date));
+D.meetings.forEach(m => m.t = ts(m.meeting_date));
+D.opportunities.forEach(o => o.t = ts(o.created_date));
+// HTML-escape any data value before it goes into innerHTML / a popup / an attribute.
+function esc(s){ return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+// Lookup tables keyed by data IDs have no prototype, so IDs like "__proto__" or "constructor" are ordinary keys.
+const dict = () => Object.create(null);
+const index = (rows, key) => { const o = dict(); rows.forEach(r => { o[r[key]] = r; }); return o; };
+const group = (rows, key, map = r => r) => { const o = dict(); rows.forEach(r => { (o[r[key]] ||= []).push(map(r)); }); return o; };
+const FIRM = index(D.firms, 'firm_id');
+const EV = index(D.events, 'event_id');
+// Event labels and colours come from the data (location, falling back to the event name).
+const SHORT = dict(), EVCOL = dict(), SHORT_H = dict();   // SHORT_H = HTML-escaped label
+const EV_TOKENS = ['--e1','--e2','--e3','--c4','--c5','--c6'];
+D.events.forEach((e,i)=>{
+  let lab = String(e.location || e.event_name || e.event_id);
+  if (Object.values(SHORT).includes(lab)) lab = `${lab} (${e.event_name || e.event_id})`;   // two events in one city
+  SHORT[e.event_id] = lab; SHORT_H[e.event_id] = esc(lab); EVCOL[e.event_id] = EV_TOKENS[i % EV_TOKENS.length];
+});
+document.getElementById('asof').textContent = D.as_of;
+
+/* ---------- formatting ---------- */
+const NA = '–';
+const money = v => {
+  if (v==null || !Number.isFinite(+v)) return NA;
+  v = +v; const a = Math.abs(v), sign = v<0 ? '-' : '';
+  if (a>=1e9) return sign+'$'+(a/1e9).toFixed(2).replace(/\.?0+$/,'')+'B';
+  if (a>=1e6) return sign+'$'+(a/1e6).toFixed(a>=1e8?0:1).replace(/\.0$/,'')+'M';
+  if (a>=1e3) return sign+'$'+Math.round(a/1e3)+'K';
+  return sign+'$'+Math.round(a).toLocaleString('en-US'); };const pct = v => (v==null || !Number.isFinite(+v)) ? NA : Math.round(v*100)+'%';
+const int = v => (v==null || !Number.isFinite(+v)) ? NA : Math.round(v).toLocaleString('en-US');
+const perDollar = v => v==null ? 'n/a' : '$'+int(v);      // pipeline per $1; n/a when the event cost nothing
+const sum = (a,f) => a.reduce((s,x)=>s+f(x),0);
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const fmtDate = t => new Date(t).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',timeZone:'UTC'});
+
+/* ---------- model: mirrors build_model.py compute() ---------- */
+// f = resolved cross-filters: {attr:{key,val}, firm, status, stepSet}. Empty object = no filters.
+function compute(W, tent, f){
+  f = f || {};
+  const firmOk = id => (!f.attr || FIRM[id][f.attr.key]===f.attr.val) && (!f.firm || id===f.firm) && (!f.firmSet || f.firmSet.has(id));
+  const OPPS = f.status ? D.opportunities.filter(o=>o.status===f.status) : D.opportunities;
+  const q = D.attendees.filter(a => a.firm_id && (a.attendance_status==='Confirmed' || (tent && a.attendance_status==='Tentative'))
+    && firmOk(a.firm_id) && (!f.stepSet || f.stepSet.has(a.firm_id)));
+  const anyAtt = new Set(D.attendees.filter(a=>a.firm_id).map(a=>a.firm_id));
+  const control = new Set(D.firms.map(x=>x.firm_id).filter(id=>!anyAtt.has(id) && firmOk(id)));
+  const w = W*DAY, events = [], credit = dict();
+  for (const e of D.events){
+    const fs = new Set(q.filter(a=>a.event_id===e.event_id).map(a=>a.firm_id));
+    const post = t => t>e.t && t<=e.t+w, pre = t => t>=e.t-w && t<e.t;
+    const mf = D.meetings.filter(m=>fs.has(m.firm_id));
+    const newO = OPPS.filter(o=>fs.has(o.firm_id) && post(o.t));
+    const preO = OPPS.filter(o=>fs.has(o.firm_id) && pre(o.t));
+    const ctlO = OPPS.filter(o=>control.has(o.firm_id) && post(o.t));
+    newO.forEach(o => (credit[o.opportunity_id] ||= []).push(e.event_id));
+    const fMeet = new Set(mf.filter(m=>post(m.t)).map(m=>m.firm_id));
+    const fOpp = new Set(newO.map(o=>o.firm_id));
+    const fDD = new Set(newO.filter(o=>o.max_stage_rank>=2).map(o=>o.firm_id));
+    const fCm = new Set(newO.filter(o=>o.status==='Committed').map(o=>o.firm_id));
+    const pipe = sum(newO,o=>o.amount);
+    events.push({
+      id:e.event_id, e, firms:fs, nFirms:fs.size,
+      contacts:q.filter(a=>a.event_id===e.event_id).length,
+      tier1:[...fs].filter(f=>FIRM[f].priority==='Tier 1').length,
+      postMeet:mf.filter(m=>post(m.t)).length, preMeet:mf.filter(m=>pre(m.t)).length,
+      funnel:[fs.size,fMeet.size,fOpp.size,fDD.size,fCm.size], stepSets:[fs,fMeet,fOpp,fDD,fCm],
+      opps:newO, nOpps:newO.length, preOpps:preO.length, pipe,
+      committed:sum(newO.filter(o=>o.status==='Committed'),o=>o.amount),
+      open:sum(newO.filter(o=>o.status==='Open'),o=>o.amount),
+      declined:sum(newO.filter(o=>o.status==='Declined'),o=>o.amount),
+      ppd: e.cost_usd>0 ? pipe/e.cost_usd : null, costPerFirm: fs.size ? e.cost_usd/fs.size : null,
+      rateAtt:fOpp.size/Math.max(fs.size,1),
+      rateCtl:new Set(ctlO.map(o=>o.firm_id)).size/Math.max(control.size,1),
+      observed: e.t+w <= AS_OF
+    });
+  }
+  const uniq = OPPS.filter(o=>credit[o.opportunity_id]);
+  return {events, credit, uniq, control, W, tent, OPPS,
+    port:{cost:sum(D.events,e=>e.cost_usd), opps:uniq.length, pipe:sum(uniq,o=>o.amount),
+      committed:sum(uniq.filter(o=>o.status==='Committed'),o=>o.amount),
+      multi:uniq.filter(o=>credit[o.opportunity_id].length>1).length,
+      sumEvents:sum(events,x=>x.pipe)}};
+}
+
+/* ---------- state ---------- */
+const state = {W:90, tent:false, ev:'ALL', pp:'meet', mix:'segment'};
+// Restore this viewer's last settings, keeping only values that are valid for this data.
+function restoreState(saved){
+  const ok = {
+    W: v => Number.isInteger(v) && v>=15 && v<=180 && v%15===0,
+    tent: v => typeof v==='boolean', perfirm: v => typeof v==='boolean', bulk: v => typeof v==='boolean',
+    ev: v => v==='ALL' || D.events.some(e=>e.event_id===v),
+    pp: v => v==='meet' || v==='opp', mix: v => ['segment','priority','coverage_region'].includes(v),
+    tr: v => ['meet','opp','pipe'].includes(v), map: v => ['pipe','cost','ppd'].includes(v),
+  };
+  if (!saved || typeof saved!=='object' || Array.isArray(saved)) return;
+  Object.keys(ok).forEach(k=>{ if (k in saved && ok[k](saved[k])) state[k]=saved[k]; });
+}
+try { restoreState(JSON.parse(localStorage.getItem('ir-dash')||'{}')); } catch(e){ /* storage blocked or corrupt: use defaults */ }
+const save = () => { try { localStorage.setItem('ir-dash', JSON.stringify(state)); } catch(e){ /* storage blocked (private window, sandbox): settings simply aren't remembered */ } };
+let M;
+
+/* ---------- controls ---------- */
+const evSeg = document.getElementById('ev-seg');
+[['ALL','All events']].concat(D.events.map(e=>[e.event_id,SHORT[e.event_id]])).forEach(([id,lab])=>{
+  const b=document.createElement('button'); b.type='button'; b.dataset.v=id;
+  b.innerHTML=(id==='ALL'?'':`<span class="dot" style="background:var(${EVCOL[id]})"></span>`)+esc(lab);
+  b.onclick=()=>setEvent(id); evSeg.appendChild(b);
+});
+function setEvent(id){ state.ev = (state.ev===id && id!=='ALL') ? 'ALL' : id; save(); render(); }
+/* Cross-filters (not saved between visits). Each chart click sets the filter for what its bar stands for. */
+const XF = {attr:null, status:null, step:null, firm:null, trend:null};
+const STEP_LABELS = ['Attended','Met after','New opp','Reached DD','Committed'];
+const ATTR_LABEL = {segment:'Segment', priority:'Tier', coverage_region:'Region'};
+// Turn the active cross-filters (XF) into the concrete filter object compute() takes;
+// funnel-step and Trends filters become firm sets recalculated for this window.
+function resolveXF(W, tent){
+  const f = {attr:XF.attr, status:XF.status, firm:XF.firm};
+  if (XF.step){ const base = compute(W, tent, f); const x = base.events.find(e=>e.id===XF.step.ev);
+    f.stepSet = new Set(x ? x.stepSets[XF.step.idx] : []); }
+  if (XF.trend) f.firmSet = trendFirms(XF.trend, compute(W, tent, f), W);
+  return f;
+}
+// Firms selected by a Trends click, recalculated for the current window and other filters.
+function trendFirms(t, base, W){
+  const w = W*DAY, scope = base.events.filter(x=>state.ev==='ALL'||x.id===state.ev);
+  const meets = D.meetings.filter(m=>!(state.bulk && BULK(m)));
+  const out = new Set();
+  if (t.kind==='month'){
+    const group = t.group==='att' ? new Set(scope.flatMap(x=>[...x.firms])) : base.control;
+    const active = t.measure==='meet' ? meets.filter(m=>mkey(m.t)===t.month).map(m=>m.firm_id)
+                                      : base.OPPS.filter(o=>mkey(o.t)===t.month).map(o=>o.firm_id);
+    active.forEach(id=>{ if (group.has(id)) out.add(id); });
+  } else if (t.kind==='purpose'){
+    scope.forEach(x=>meets.forEach(m=>{ if (!x.firms.has(m.firm_id) || m.purpose!==t.purpose) return;
+      const hit = t.when==='post' ? (m.t>x.e.t && m.t<=x.e.t+w) : (m.t>=x.e.t-w && m.t<x.e.t);
+      if (hit) out.add(m.firm_id); }));
+  } else if (t.kind==='first'){
+    const x = base.events.find(e=>e.id===t.ev); if (!x) return out;
+    x.firms.forEach(id=>{ const d = meets.filter(m=>m.firm_id===id && m.t>x.e.t && m.t<=x.e.t+w).map(m=>(m.t-x.e.t)/DAY).sort((a,b)=>a-b)[0];
+      if (t.none ? d==null : (d!=null && d>=t.lo && d<=t.hi)) out.add(id); });
+  }
+  return out;
+}
+function trendLabel(t){
+  if (t.kind==='month') return `Active in ${new Date(t.month).toLocaleDateString('en-US',{month:'short',year:'numeric',timeZone:'UTC'})} · ${t.group==='att'?'attending firms':'firms at no event'} · ${({meet:'meetings',opp:'new opps',pipe:'new pipeline'})[t.measure]}`;
+  if (t.kind==='purpose') return `Had a ${t.purpose.toLowerCase()} meeting ${t.when==='post'?'after':'before'} the event`;
+  return `${SHORT[t.ev]}: ${t.none?'no follow-up meeting':`first follow-up in ${t.lab} days`}`;
+}
+// Apply a click: if everything it would set is already set, the click clears it instead (toggle).
+function applyClick(patch){
+  const same = Object.entries(patch).every(([k,v]) => k==='ev' ? state.ev===v : JSON.stringify(XF[k])===JSON.stringify(v));
+  Object.entries(patch).forEach(([k,v]) => { if (k==='ev') state.ev = same ? 'ALL' : v; else XF[k] = same ? null : v; });
+  save(); render();
+}
+const onBar = handler => (e, els) => { if (!els.length) return; const el = els[0]; setTimeout(() => handler(el.datasetIndex, el.index)); };
+const hoverCursor = (e, els) => { e.native.target.style.cursor = els.length ? 'pointer' : 'default'; };
+// Draw the active-filter chips under the controls (with × to remove one, and Clear all).
+function renderChips(){
+  const c = [];
+  if (XF.attr) c.push(['attr', `${ATTR_LABEL[XF.attr.key]}: ${XF.attr.val}`]);
+  if (XF.status) c.push(['status', `Status: ${XF.status}`]);
+  if (XF.step) c.push(['step', `Funnel: ${SHORT[XF.step.ev]} · ${STEP_LABELS[XF.step.idx]}`]);
+  if (XF.firm) c.push(['firm', `Firm: ${FIRM[XF.firm].firm_name}`]);
+  if (XF.trend) c.push(['trend', trendLabel(XF.trend)]);
+  const el = document.getElementById('chips');
+  el.hidden = !c.length && state.ev==='ALL';
+  el.innerHTML = '<span class="lab">Filters</span>' +
+    (state.ev!=='ALL' ? `<span class="fchip"><span class="dot" style="background:var(${EVCOL[state.ev]})"></span>Event: ${SHORT_H[state.ev]}<button type="button" data-k="ev" aria-label="Remove event filter">×</button></span>` : '') +
+    c.map(([k,t])=>`<span class="fchip">${esc(t)}<button type="button" data-k="${k}" aria-label="Remove filter ${esc(t)}">×</button></span>`).join('') +
+    `<button type="button" class="clear" id="chips-clear">Clear all</button>`;
+  el.querySelectorAll('.fchip button').forEach(b=>b.onclick=()=>{ if(b.dataset.k==='ev') state.ev='ALL'; else XF[b.dataset.k]=null; save(); render(); });
+  document.getElementById('chips-clear').onclick=()=>{ XF.attr=XF.status=XF.step=XF.firm=XF.trend=null; state.ev='ALL'; save(); render(); };
+}
+const win = document.getElementById('win'), winOut = document.getElementById('win-out'), tent = document.getElementById('tent');
+win.value = state.W; tent.checked = state.tent;
+win.oninput = () => { state.W=+win.value; save(); render(); };
+tent.onchange = () => { state.tent=tent.checked; save(); render(); };
+function wireSeg(id,key){ const el=document.getElementById(id);
+  el.querySelectorAll('button').forEach(b=>b.onclick=()=>{state[key]=b.dataset.v; save(); render();}); }
+wireSeg('pp-seg','pp'); wireSeg('mix-seg','mix');
+
+/* ---------- tabs ---------- */
+const TABS=[['summary','Executive summary'],['charts','Interactive charts'],['map','Map'],['trends','Trends'],['details','Data details'],['quality','Data quality'],['assumptions','Assumptions'],['dictionary','Data dictionary']];
+const tabsEl=document.getElementById('tabs');
+TABS.forEach(([id,lab])=>{const b=document.createElement('button');b.type='button';b.role='tab';b.id='t-'+id;b.dataset.v=id;b.textContent=lab;
+  b.setAttribute('aria-controls','p-'+id); b.onclick=()=>{ location.hash=id; }; tabsEl.appendChild(b);});
+function showTab(){
+  const id = TABS.some(t=>t[0]===location.hash.slice(1)) ? location.hash.slice(1) : 'summary';
+  TABS.forEach(([t])=>{ document.getElementById('p-'+t).hidden = t!==id; document.getElementById('t-'+t).setAttribute('aria-selected', t===id); });
+  state.tab=id; if (id==='charts') drawCharts(); if (id==='map') drawMap(); if (id==='trends') drawTrends(); drawDetails(); drawQuality(); drawAssumptions(); drawDictionary();
+}
+addEventListener('hashchange', showTab);
+
+/* ---------- summary ---------- */
+function renderSummary(){
+  const sel = state.ev==='ALL' ? null : M.events.find(x=>x.id===state.ev);
+  const k = sel
+    ? [['Event cost', money(sel.e.cost_usd), `${sel.nFirms} attending firms · ${money(sel.costPerFirm)} per firm`],
+       ['New pipeline associated', money(sel.pipe), `${sel.nOpps} opportunities within ${M.W} days`],
+       ['Pipeline per $1 of cost', perDollar(sel.ppd), sel.observed?'Window fully observed':'Window not fully observed yet'],
+       ['Committed so far', money(sel.committed), `${sel.funnel[4]} firms committed`]]
+    : [['Total event spend', money(M.port.cost), `${D.events.length} events · ${new Set(M.events.flatMap(x=>[...x.firms])).size} attending firms`],
+       ['New pipeline associated', money(M.port.pipe), `${M.port.opps} unique opportunities · ${M.port.multi} credited to 2+ events`],
+       ['Pipeline per $1 of cost', perDollar(M.port.cost>0 ? M.port.pipe/M.port.cost : null), `Within ${M.W} days of each event`],
+       ['Committed so far', money(M.port.committed), pct(M.port.committed/Math.max(M.port.pipe,1))+' of associated pipeline']];
+  document.getElementById('kpis').innerHTML = k.map(([l,v,d])=>`<div class="kpi"><div class="eyebrow">${l}</div><div class="v">${v}</div><div class="d">${d}</div></div>`).join('');
+
+  const ranked = M.events.filter(x=>x.ppd!=null), ppds = ranked.map(x=>x.ppd);
+  const hi = ppds.length ? Math.max(...ppds) : null, lo = ppds.length ? Math.min(...ppds) : null;
+  const chip = x => x.ppd==null ? `<span class="chip neutral">No cost</span>` : ranked.length<2 ? '' :
+    x.ppd===hi ? `<span class="chip good">Highest</span>` : x.ppd===lo ? `<span class="chip bad">Lowest</span>` : `<span class="chip neutral">Middle</span>`;
+  const t = document.getElementById('scorecard');
+  t.innerHTML = `<thead><tr><th>Event</th><th class="r">Cost</th><th class="r">Firms (Tier 1)</th><th class="r">Cost / firm</th><th class="r">Met after</th><th class="r">New opps</th><th class="r">Pipeline</th><th class="r">Per $1</th><th class="r">Committed</th></tr></thead><tbody>`+
+   M.events.map(x=>`<tr data-ev="${esc(x.id)}" class="${state.ev===x.id?'sel':''}" tabindex="0">
+     <td><div class="ev-name"><span class="dot" style="background:var(${EVCOL[x.id]})"></span>${esc(x.e.event_name)}</div>
+       <div class="ev-meta">${esc(x.e.event_type)} · ${esc(x.e.location)} · ${fmtDate(x.e.t)}${x.observed?'':' · <span class="chip warn">window not fully observed</span>'}</div></td>
+     <td class="r num">${money(x.e.cost_usd)}</td><td class="r num">${x.nFirms} (${x.tier1})</td><td class="r num">${money(x.costPerFirm)}</td>
+     <td class="r num">${x.funnel[1]} of ${x.nFirms}<div class="ev-meta">${pct(x.funnel[1]/Math.max(x.nFirms,1))}</div></td>
+     <td class="r num">${x.nOpps}</td><td class="r num">${money(x.pipe)}</td>
+     <td class="r num">${perDollar(x.ppd)}<div>${chip(x)}</div></td><td class="r num">${money(x.committed)}</td></tr>`).join('')+`</tbody>`;
+  t.querySelectorAll('tbody tr').forEach(r=>{ r.onclick=()=>setEvent(r.dataset.ev); r.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();setEvent(r.dataset.ev);} }; });
+
+  if (!ranked.length){
+    document.getElementById('findings').innerHTML = '<li>No events with a cost above $0 in this view, so there is nothing to compare.</li>';
+    document.getElementById('actions').innerHTML = '<li>Clear the filters or add event data to see recommendations.</li>';
+    return;
+  }
+  const best = ranked.reduce((a,b)=>b.ppd>a.ppd?b:a), worst = ranked.reduce((a,b)=>b.ppd<a.ppd?b:a);
+  const up = M.events.filter(x=>x.postMeet>x.preMeet), down = M.events.filter(x=>x.postMeet<x.preMeet);
+  const ra = sum(M.events,x=>x.funnel[2])/Math.max(sum(M.events,x=>x.nFirms),1);
+  const rc = sum(M.events,x=>x.rateCtl)/M.events.length;
+  const mm = x => `${SHORT_H[x.id]} (${x.preMeet} → ${x.postMeet})`;
+  const f = [
+    `<b>${SHORT_H[best.id]} delivered the most pipeline per dollar.</b> The ${esc(best.e.event_name)} is associated with ${perDollar(best.ppd)} of new pipeline per $1 at ${money(best.costPerFirm)} per attending firm. ${SHORT_H[worst.id]} returned ${perDollar(worst.ppd)} per $1 at ${money(worst.costPerFirm)} per firm.`,
+    `<b>Follow-up activity ${up.length? 'rose after '+up.map(mm).join(' and '):'did not rise'}${down.length?', but fell after '+down.map(mm).join(' and '):''}.</b> Meeting counts compare the ${M.W} days before and after each event for the same firms.`,
+    rc>ra
+      ? `<b>Firms that attended no event opened opportunities more often.</b> ${pct(rc)} of non-attending firms opened one in the same windows, versus ${pct(ra)} of attending firms. Events sit alongside pipeline but the data does not show they create it. The comparison group is small (${M.control.size} firms) and none of them has a logged meeting, so treat this as a warning sign rather than a measured effect.`
+      : `<b>Attending firms opened opportunities more often than non-attendees</b> (${pct(ra)} vs ${pct(rc)}). That is consistent with an event effect, but invited firms are already more engaged, so it is not proof.`,
+    `<b>Commitments are still early.</b> ${money(M.port.committed)} of the ${money(M.port.pipe)} associated pipeline has committed; the rest is open or declined. Read pipeline as a leading indicator.`
+  ];
+  const filtered = XF.attr||XF.status||XF.step||XF.firm||XF.trend;
+  document.getElementById('findings').innerHTML = (filtered?`<li style="list-style:none;margin-left:-20px" class="ev-meta">These findings reflect the active filters. Clear them to see the full picture.</li>`:'') + f.map(s=>`<li>${s}</li>`).join('');
+
+  const a = [
+    `<b>Test the ${best.e.event_type==='Hospitality'?'hosted-dinner':esc(String(best.e.event_type||'event').toLowerCase())} format again.</b> ${SHORT_H[best.id]} was the ${best.e.cost_usd===Math.min(...ranked.map(x=>x.e.cost_usd))?'cheapest event and the most efficient':'most efficient event'}. Run a second dinner in another region and track a matched set of firms that were not invited.`,
+    `<b>Review ${SHORT_H[worst.id]} before renewing.</b> It cost ${money(worst.e.cost_usd)}${worst!==best?` and only ${worst.funnel[1]} of ${worst.nFirms} attending firms had a follow-up meeting within ${M.W} days`:''}. Set a two-week follow-up target for every attending firm.`,
+    `<b>Fix how events are recorded.</b> Tag meetings and opportunities with the event that sourced them, confirm actual attendance after each event, and remove duplicate records. That turns this association view into something closer to attribution.`
+  ];
+  document.getElementById('actions').innerHTML = a.map(s=>`<li>${s}</li>`).join('');
+}
+
+/* ---------- charts ---------- */
+const charts = {};
+function mk(id, cfg){ if (charts[id]) charts[id].destroy(); charts[id] = new Chart(document.getElementById(id), cfg); return charts[id]; }
+function theme(){
+  Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
+  Chart.defaults.font.size = 12;
+  Chart.defaults.color = css('--muted');
+  Chart.defaults.borderColor = css('--line');
+  // Change only the duration. Replacing the whole animation object drops Chart.js's colour
+  // interpolation and crashes its shared animation loop on hover/click (all charts go blank).
+  Chart.defaults.animation.duration = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 250;
+  Chart.defaults.plugins.legend.labels.boxWidth = 10;
+  Chart.defaults.plugins.legend.labels.boxHeight = 10;
+  Chart.defaults.plugins.tooltip.backgroundColor = css('--ink');
+  Chart.defaults.plugins.tooltip.titleColor = css('--bg');
+  Chart.defaults.plugins.tooltip.bodyColor = css('--bg');
+  Chart.defaults.maintainAspectRatio = false;
+}
+const evc = id => css(EVCOL[id]);
+const dim = (col, id) => (state.ev==='ALL' || state.ev===id) ? col : col + '40';
+const yMoney = () => ({ticks:{callback:v=>money(v)}, grid:{color:css('--line')}});
+const noGrid = {grid:{display:false}};
+
+// Draw the eight Interactive charts from the current model M; every bar click sets a cross-filter.
+function drawCharts(){
+  if (typeof Chart === 'undefined' || state.tab!=='charts') return;
+  theme();
+  const ev = M.events, labs = ev.map(x=>SHORT[x.id]);
+
+  mk('c-ppd',{type:'bar',data:{labels:labs,datasets:[{data:ev.map(x=>x.ppd),backgroundColor:ev.map(x=>dim(evc(x.id),x.id)),borderRadius:4,maxBarThickness:70}]},
+    options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>{const x=ev[c.dataIndex];return [`${perDollar(x.ppd)} pipeline per $1`,`${money(x.pipe)} pipeline / ${money(x.e.cost_usd)} cost`];}}}},
+      scales:{x:noGrid,y:{ticks:{callback:v=>'$'+int(v)},grid:{color:css('--line')},title:{display:true,text:'Pipeline $ per $1 cost'}}},
+      onClick:onBar((d,i)=>setEvent(ev[i].id)), onHover:hoverCursor}});
+
+  const steps=['Attended','Met after','New opp','Reached DD','Committed'];
+  mk('c-funnel',{type:'bar',data:{labels:steps,datasets:ev.map(x=>({label:SHORT[x.id],data:x.funnel,backgroundColor:dim(evc(x.id),x.id),borderRadius:3}))},
+    options:{plugins:{tooltip:{callbacks:{label:c=>{const x=ev[c.datasetIndex];return `${SHORT[x.id]}: ${c.raw} firms (${pct(c.raw/Math.max(x.funnel[0],1))} of attending)`;}}}},
+      scales:{x:noGrid,y:{beginAtZero:true,ticks:{precision:0},grid:{color:css('--line')},title:{display:true,text:'Firms'}}},
+      onHover:hoverCursor, onClick:onBar((d,i)=>{ const id=ev[d].id; i===0 ? applyClick({ev:id}) : applyClick({ev:id, step:{ev:id, idx:i}}); })}});
+
+  mk('c-status',{type:'bar',data:{labels:labs,datasets:[
+      {label:'Committed',data:ev.map(x=>x.committed),backgroundColor:css('--good')},
+      {label:'Open',data:ev.map(x=>x.open),backgroundColor:css('--accent')+'99'},
+      {label:'Declined',data:ev.map(x=>x.declined),backgroundColor:css('--bad')+'cc'}]},
+    options:{indexAxis:'y',plugins:{tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${money(c.raw)}`}}},
+      scales:{x:{stacked:true,...yMoney()},y:{stacked:true,grid:{display:false}}},
+      onHover:hoverCursor, onClick:onBar((d,i)=>applyClick({ev:ev[i].id, status:['Committed','Open','Declined'][d]}))}});
+
+  document.getElementById('ctl-n').textContent = M.control.size;
+  mk('c-ctl',{type:'bar',data:{labels:labs,datasets:[
+      {label:'Attending firms',data:ev.map(x=>x.rateAtt),backgroundColor:ev.map(x=>dim(evc(x.id),x.id)),borderRadius:3},
+      {label:'Firms at no event',data:ev.map(x=>x.rateCtl),backgroundColor:css('--ctl'),borderRadius:3}]},
+    options:{plugins:{legend:{labels:{generateLabels:ch=>[{text:'Attending firms',fillStyle:css('--e1'),strokeStyle:'transparent',fontColor:css('--muted')},{text:'Firms at no event',fillStyle:css('--ctl'),strokeStyle:'transparent',fontColor:css('--muted')}]}},
+      tooltip:{callbacks:{label:c=>{const x=ev[c.dataIndex];return c.datasetIndex? `No event: ${pct(c.raw)} of ${M.control.size} firms`:`Attended: ${pct(c.raw)} (${x.funnel[2]} of ${x.nFirms} firms)`;}}}},
+      scales:{x:noGrid,y:{beginAtZero:true,max:1,ticks:{callback:v=>pct(v)},grid:{color:css('--line')}}},
+      onHover:hoverCursor, onClick:onBar((d,i)=>setEvent(ev[i].id))}});
+
+  document.querySelectorAll('#pp-seg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===state.pp));
+  const isM = state.pp==='meet';
+  mk('c-prepost',{type:'bar',data:{labels:labs,datasets:[
+      {label:`${M.W} days before`,data:ev.map(x=>isM?x.preMeet:x.preOpps),backgroundColor:css('--ctl'),borderRadius:3},
+      {label:`${M.W} days after`,data:ev.map(x=>isM?x.postMeet:x.nOpps),backgroundColor:ev.map(x=>dim(evc(x.id),x.id)),borderRadius:3}]},
+    options:{plugins:{legend:{labels:{generateLabels:()=>[{text:`${M.W} days before`,fillStyle:css('--ctl'),strokeStyle:'transparent',fontColor:css('--muted')},{text:`${M.W} days after`,fillStyle:css('--e1'),strokeStyle:'transparent',fontColor:css('--muted')}]}}},
+      scales:{x:noGrid,y:{beginAtZero:true,ticks:{precision:0},grid:{color:css('--line')},title:{display:true,text:isM?'Meetings':'New opportunities'}}},
+      onHover:hoverCursor, onClick:onBar((d,i)=>setEvent(ev[i].id))}});
+
+  const Ws=[]; for(let w=15;w<=180;w+=15) Ws.push(w);
+  const runs = Ws.map(w=>compute(w,state.tent,resolveXF(w,state.tent)));
+  mk('c-sens',{type:'line',data:{labels:Ws,datasets:ev.map((x,i)=>({label:SHORT[x.id],data:runs.map(r=>r.events[i].ppd),
+      borderColor:dim(evc(x.id),x.id),backgroundColor:dim(evc(x.id),x.id),tension:.25,borderWidth:2,
+      pointRadius:Ws.map(w=>w===state.W?5:3),pointStyle:runs.map(r=>r.events[i].observed?'circle':'crossRot'),
+      segment:{borderDash:c=>runs[c.p1DataIndex].events[i].observed?undefined:[4,4]}}))},
+    options:{plugins:{tooltip:{callbacks:{title:c=>`${c[0].label}-day window`,label:c=>{const o=runs[c.dataIndex].events[c.datasetIndex];return `${c.dataset.label}: ${perDollar(c.raw)} per $1${o.observed?'':' (not fully observed)'}`;}}}},
+      scales:{x:{grid:{display:false},title:{display:true,text:'Window (days)'}},y:{beginAtZero:true,ticks:{callback:v=>'$'+int(v)},grid:{color:css('--line')}}},
+      onHover:hoverCursor, onClick:onBar((d,i)=>setEvent(ev[d].id))},
+    plugins:[{id:'cur',afterDatasetsDraw(ch){const xs=ch.scales.x,i=Ws.indexOf(state.W);if(i<0)return;const px=xs.getPixelForValue(i),c=ch.ctx;
+      c.save();c.strokeStyle=css('--muted');c.setLineDash([2,3]);c.beginPath();c.moveTo(px,ch.chartArea.top);c.lineTo(px,ch.chartArea.bottom);c.stroke();c.restore();}}]});
+
+  document.querySelectorAll('#mix-seg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===state.mix));
+  const key=state.mix, cats=[...new Set(D.firms.map(f=>f[key]))].sort();
+  const pal=['--c1','--c2','--c3','--c4','--c5','--c6'].map(css);
+  mk('c-mix',{type:'bar',data:{labels:labs,datasets:cats.map((c,i)=>({label:c,data:ev.map(x=>sum(x.opps.filter(o=>FIRM[o.firm_id][key]===c),o=>o.amount)),
+      backgroundColor:ev.map(x=>dim(pal[i%pal.length],x.id))}))},
+    options:{plugins:{tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${money(c.raw)}`}}},scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,...yMoney()}},
+      onHover:hoverCursor, onClick:onBar((d,i)=>applyClick({ev:ev[i].id, attr:{key, val:cats[d]}}))}});
+
+  const scope = state.ev==='ALL' ? M.events : M.events.filter(x=>x.id===state.ev);
+  const byFirm=dict();
+  scope.forEach(x=>x.opps.forEach(o=>{ const f=(byFirm[o.firm_id] ||= {id:o.firm_id,tot:0,seen:new Set(),ev:{}});
+    if(!f.seen.has(o.opportunity_id)){f.seen.add(o.opportunity_id);f.tot+=o.amount;}
+    const share=o.amount/M.credit[o.opportunity_id].filter(e=>scope.some(s=>s.id===e)).length; f.ev[x.id]=(f.ev[x.id]||0)+share; }));
+  const top=Object.values(byFirm).sort((a,b)=>b.tot-a.tot).slice(0,10);
+  mk('c-firms',{type:'bar',data:{labels:top.map(f=>FIRM[f.id].firm_name+' · '+FIRM[f.id].priority),
+      datasets:scope.map(x=>({label:SHORT[x.id],data:top.map(f=>f.ev[x.id]||0),backgroundColor:evc(x.id)}))},
+    options:{indexAxis:'y',plugins:{tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${money(c.raw)}`,
+      footer:c=>{const f=top[c[0].dataIndex];return `Firm total ${money(f.tot)} · ${FIRM[f.id].segment} · ${FIRM[f.id].coverage_region}`;}}}},
+      scales:{x:{stacked:true,...yMoney()},y:{stacked:true,grid:{display:false}}},
+      onHover:hoverCursor, onClick:onBar((d,i)=>applyClick({firm:top[i].id}))}});
+}
+
+/* ---------- map ---------- */
+// Map positions come from the event's location. Unknown cities get no pin (and a note) instead of breaking the map.
+const CITY_COORDS = {'new york':[40.71,-74.01], 'london':[51.51,-0.13], 'berlin':[52.52,13.40], 'paris':[48.86,2.35],
+  'frankfurt':[50.11,8.68], 'zurich':[47.37,8.54], 'geneva':[46.20,6.14], 'amsterdam':[52.37,4.90], 'madrid':[40.42,-3.70],
+  'milan':[45.46,9.19], 'stockholm':[59.33,18.07], 'dubai':[25.20,55.27], 'abu dhabi':[24.45,54.38], 'riyadh':[24.71,46.68],
+  'singapore':[1.35,103.82], 'hong kong':[22.32,114.17], 'tokyo':[35.68,139.69], 'seoul':[37.57,126.98], 'sydney':[-33.87,151.21],
+  'mumbai':[19.08,72.88], 'boston':[42.36,-71.06], 'chicago':[41.88,-87.63], 'san francisco':[37.77,-122.42],
+  'los angeles':[34.05,-118.24], 'toronto':[43.65,-79.38], 'washington':[38.91,-77.04], 'miami':[25.76,-80.19], 'sao paulo':[-23.55,-46.63]};
+const CITY = dict();
+D.events.forEach(e=>{ const c = CITY_COORDS[String(e.location||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')]; if (c) CITY[e.event_id]=c; });
+// Coverage regions come from the data. Known names get a bubble position; others are listed in the map note.
+const REGION_COORDS = {'americas':[12,-92], 'north america':[40,-100], 'latin america':[-15,-60], 'latam':[-15,-60],
+  'emea':[6,24], 'europe':[50,12], 'middle east':[26,45], 'africa':[2,20], 'apac':[8,116], 'asia':[30,100],
+  'asia pacific':[8,116], 'asia-pacific':[8,116], 'oceania':[-25,135], 'australia':[-25,135]};
+const REGIONS = [...new Set(D.firms.map(f=>f.coverage_region).filter(r=>r!=null && r!==''))]
+  .sort((a,b)=>D.firms.filter(f=>f.coverage_region===b).length - D.firms.filter(f=>f.coverage_region===a).length || String(a).localeCompare(String(b)));
+const REG = dict();
+REGIONS.forEach(r=>{ const c = REGION_COORDS[String(r).trim().toLowerCase()]; if (c) REG[r]=c; });
+const isDark = () => { const t=document.documentElement.dataset.theme; return t ? t==='dark' : matchMedia('(prefers-color-scheme: dark)').matches; };
+let map, outline, tiles, layer, tilesOk=false;
+function initMap(){
+  if (map || typeof L==='undefined') return;
+  const WORLD = JSON.parse(document.getElementById('world').textContent);
+  map = L.map('map',{minZoom:1,maxZoom:7,zoomSnap:.5,worldCopyJump:true,scrollWheelZoom:false}).setView([28,8],1.5);
+  outline = L.geoJSON(WORLD,{interactive:false,style:()=>({color:css('--line'),weight:.7,fillColor:css('--surface'),fillOpacity:1})}).addTo(map);
+  tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:7,attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'});
+  tiles.once('tileload',()=>{ tilesOk=true; map.removeLayer(outline); mapNote(); });
+  tiles.addTo(map);
+  setTimeout(()=>{ if(!tilesOk){ map.removeLayer(tiles); mapNote(); } }, 4000);
+  layer = L.layerGroup().addTo(map);
+  document.querySelectorAll('#map-seg button').forEach(b=>b.onclick=()=>{state.map=b.dataset.v; save(); drawMap();});
+}
+function mapNote(){
+  const missing = D.events.filter(e=>!CITY[e.event_id]).map(e=>`${e.event_name} (${e.location||'no location'})`)
+    .concat(REGIONS.filter(r=>!REG[r]).map(r=>`region ${r}`));
+  document.getElementById('map-mode').textContent = (missing.length ? `No map position for: ${missing.join(', ')}. ` : '') + (tilesOk
+    ? 'Base map: OpenStreetMap tiles.'
+    : 'Base map: built-in country outline. Map tiles are blocked in this view; they load when the file is opened locally or from GitHub Pages.');
+}
+// Draw the Map tab: event pins, coverage-region bubbles, event-region lines and the region table.
+function drawMap(){
+  if (state.tab!=='map') return;
+  initMap(); if (!map) { document.getElementById('map-mode').textContent='The map library did not load.'; return; }
+  map.invalidateSize();
+  document.getElementById('map').classList.toggle('dark-tiles', isDark());
+  outline.setStyle({color:css('--line'),fillColor:css('--surface')});
+  layer.clearLayers();
+  const key = state.map || 'pipe';
+  document.querySelectorAll('#map-seg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===key));
+  const val = x => key==='cost'? x.e.cost_usd : key==='ppd'? x.ppd : x.pipe;
+  const lab = x => key==='cost'? money(x.e.cost_usd) : key==='ppd'? perDollar(x.ppd)+' per $1' : money(x.pipe);
+  const vmax = Math.max(...M.events.map(x=>val(x)||0),1);
+  const scope = M.events.filter(x=>state.ev==='ALL'||x.id===state.ev);
+  const on = x => state.ev==='ALL'||state.ev===x.id;
+
+  // links: attending firms per region per event
+  M.events.forEach(x=>{ if(!on(x) || !CITY[x.id]) return;
+    REGIONS.forEach(r=>{ if (!REG[r]) return; const n=[...x.firms].filter(f=>FIRM[f].coverage_region===r).length; if(!n) return;
+      L.polyline([CITY[x.id],REG[r]],{color:evc(x.id),weight:1+n*.7,opacity:.45,dashArray:'4 5',interactive:true})
+        .bindTooltip(`${n} ${r} firm${n>1?'s':''} attended ${SHORT_H[x.id]}`,{sticky:true}).addTo(layer); });
+  });
+  // region bubbles
+  const pipeMax = Math.max(...REGIONS.map(r=>sum(M.uniq.filter(o=>FIRM[o.firm_id].coverage_region===r),o=>o.amount)),1);
+  REGIONS.forEach(r=>{
+    if (!REG[r]) return;                           // no known position: still listed in the region table
+    const all = D.firms.filter(f=>f.coverage_region===r);
+    const att = new Set(scope.flatMap(x=>[...x.firms]).filter(f=>FIRM[f].coverage_region===r));
+    const opps = [...new Map(scope.flatMap(x=>x.opps).filter(o=>FIRM[o.firm_id].coverage_region===r).map(o=>[o.opportunity_id,o])).values()];
+    const p = sum(opps,o=>o.amount);
+    L.circleMarker(REG[r],{radius:10+30*Math.sqrt(p/pipeMax),color:css('--muted'),weight:1.5,fillColor:css('--muted'),fillOpacity:.18})
+      .bindTooltip(esc(r),{permanent:true,direction:'bottom',className:'rlab',offset:[0,12]})
+      .bindPopup(`<b>${esc(r)}</b><table class="ptbl">
+        <tr><td>Firms covered</td><td>${all.length}</td></tr>
+        <tr><td>Attending firms${state.ev==='ALL'?'':' ('+SHORT_H[state.ev]+')'}</td><td>${att.size}</td></tr>
+        <tr><td>Associated opportunities</td><td>${opps.length}</td></tr>
+        <tr><td>Associated pipeline</td><td>${money(p)}</td></tr></table>`).addTo(layer);
+  });
+  // event pins
+  M.events.forEach(x=>{
+    if (!CITY[x.id]) return;                       // no known position for this location
+    const r = 9+27*Math.sqrt((val(x)||0)/vmax);
+    L.circleMarker(CITY[x.id],{radius:r,color:evc(x.id),weight:2,fillColor:evc(x.id),fillOpacity:on(x)?.55:.12,opacity:on(x)?1:.35})
+      .bindTooltip(`${SHORT_H[x.id]} · ${lab(x)}`,{direction:'top',offset:[0,-r]})
+      .bindPopup(`<b>${esc(x.e.event_name)}</b><div class="ev-meta">${esc(x.e.event_type)} · ${esc(x.e.location)} · ${fmtDate(x.e.t)}</div><table class="ptbl">
+        <tr><td>Cost</td><td>${money(x.e.cost_usd)}</td></tr><tr><td>Attending firms</td><td>${x.nFirms}</td></tr>
+        <tr><td>Met after (${M.W}d)</td><td>${x.funnel[1]}</td></tr><tr><td>New opportunities</td><td>${x.nOpps}</td></tr>
+        <tr><td>New pipeline</td><td>${money(x.pipe)}</td></tr><tr><td>Per $1 of cost</td><td>${perDollar(x.ppd)}</td></tr></table>`)
+      .on('click',()=>{}).addTo(layer);
+  });
+  document.getElementById('map-legend').innerHTML = M.events.map(x=>`<span><span class="dot" style="background:var(${EVCOL[x.id]})"></span>${SHORT_H[x.id]}</span>`).join('')
+    + `<span><span class="dot" style="background:var(--muted);opacity:.5"></span>Coverage region (size = associated pipeline)</span>`;
+
+  // region × event table
+  const ctl = M.control;
+  const rows = REGIONS.map(r=>{
+    const cells = M.events.map(x=>{ const fs=[...x.firms].filter(f=>FIRM[f].coverage_region===r);
+      const p=sum(x.opps.filter(o=>FIRM[o.firm_id].coverage_region===r),o=>o.amount);
+      return `<td class="r num">${fs.length}<div class="ev-meta">${money(p)}</div></td>`; }).join('');
+    const attF = new Set(scope.flatMap(x=>[...x.firms]).filter(f=>FIRM[f].coverage_region===r));
+    const attO = new Set(scope.flatMap(x=>x.opps).filter(o=>FIRM[o.firm_id].coverage_region===r).map(o=>o.firm_id));
+    const cF = [...ctl].filter(f=>FIRM[f].coverage_region===r);
+    const cO = new Set(scope.flatMap(x=>M.OPPS.filter(o=>cF.includes(o.firm_id) && o.t>x.e.t && o.t<=x.e.t+M.W*DAY)).map(o=>o.firm_id));
+    return `<tr><td><b>${esc(r)}</b><div class="ev-meta">${D.firms.filter(f=>f.coverage_region===r).length} firms</div></td>${cells}
+      <td class="r num">${attF.size? pct(attO.size/attF.size):'–'}<div class="ev-meta">${attO.size} of ${attF.size}</div></td>
+      <td class="r num">${cF.length? pct(cO.size/cF.length):'–'}<div class="ev-meta">${cO.size} of ${cF.length}</div></td></tr>`;
+  }).join('');
+  document.getElementById('region-tbl').innerHTML = `<thead><tr><th>Region</th>${M.events.map(x=>`<th class="r">${SHORT_H[x.id]}<div class="ev-meta">firms · pipeline</div></th>`).join('')}<th class="r">Attending firms<div class="ev-meta">opened an opp</div></th><th class="r">Firms at no event<div class="ev-meta">opened an opp</div></th></tr></thead><tbody>${rows}</tbody>`;
+}
+
+/* ---------- trends ---------- */
+const BULK = m => m.internal_attendee==='Coverage B' && m.meeting_type==='Video' && m.purpose==='Relationship';
+// Months shown in Trends: from the earliest activity in the data to the as-of date (or the latest activity).
+const ALL_T = D.meetings.map(m=>m.t).concat(D.opportunities.map(o=>o.t), D.events.map(e=>e.t)).filter(Number.isFinite);
+const monthStart = t => { const d=new Date(t); return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1); };
+const DATA_T0 = ALL_T.length ? monthStart(Math.min(...ALL_T)) : monthStart(AS_OF);
+const DATA_T1 = monthStart(Math.max(AS_OF, ...(ALL_T.length ? ALL_T : [AS_OF])));
+const MONTHS = []; for (let t=DATA_T0; t<=DATA_T1; ){ MONTHS.push(t); const d=new Date(t); t=Date.UTC(d.getUTCFullYear(), d.getUTCMonth()+1, 1); }
+const mkey = t => { const d=new Date(t); return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1); };
+const evLines = (labels, getX) => ({id:'evlines', afterDatasetsDraw(ch){ const c=ch.ctx, a=ch.chartArea;
+  (state.ev==='ALL'?D.events:D.events.filter(e=>e.event_id===state.ev)).forEach(e=>{ const px=getX(ch,e); if(px==null) return;
+    c.save(); c.strokeStyle=evc(e.event_id); c.setLineDash([4,4]); c.lineWidth=1.5; c.beginPath(); c.moveTo(px,a.top); c.lineTo(px,a.bottom); c.stroke();
+    c.setLineDash([]); c.fillStyle=evc(e.event_id); c.font='600 11px '+getComputedStyle(document.body).fontFamily; c.textAlign='left'; c.fillText(SHORT[e.event_id], px+4, a.top+12); c.restore(); }); }});
+// Draw the five Trends charts; clicks set month / purpose / follow-up / event filters.
+function drawTrends(){
+  if (typeof Chart==='undefined' || state.tab!=='trends') return;
+  theme();
+  document.querySelectorAll('.wtxt').forEach(s=>s.textContent=M.W);
+  document.querySelectorAll('#tr-seg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===state.tr));
+  const scope = M.events.filter(x=>state.ev==='ALL'||x.id===state.ev);
+  const attF = new Set(scope.flatMap(x=>[...x.firms])), ctl = M.control;
+  const meets = D.meetings.filter(m=>!(state.bulk && BULK(m)));
+  const measure = (group) => MONTHS.map(mt=>{
+    const v = state.tr==='meet' ? meets.filter(m=>group.has(m.firm_id)&&mkey(m.t)===mt).length
+      : state.tr==='opp' ? M.OPPS.filter(o=>group.has(o.firm_id)&&mkey(o.t)===mt).length
+      : sum(M.OPPS.filter(o=>group.has(o.firm_id)&&mkey(o.t)===mt),o=>o.amount);
+    return state.perfirm ? v/Math.max(group.size,1) : v; });
+  const ctlMeets = D.meetings.filter(m=>ctl.has(m.firm_id)).length;
+  document.getElementById('tr-note').textContent = (state.tr==='meet' && !ctlMeets) ? `None of the ${ctl.size} firms at no event has a logged meeting, although they opened ${M.OPPS.filter(o=>ctl.has(o.firm_id)).length} opportunities. Meeting logging looks incomplete for firms outside events.` : '';
+  const fmtV = v => state.tr==='pipe' ? money(v) : (state.perfirm? v.toFixed(2) : int(v));
+  const mLabels = MONTHS.map(t=>new Date(t).toLocaleDateString('en-US',{month:'short',year:'2-digit',timeZone:'UTC'}));
+  const attCol = state.ev==='ALL' ? css('--accent') : evc(state.ev);
+  mk('t-monthly',{type:'bar',data:{labels:mLabels,datasets:[
+      {label:`Attending firms (${attF.size})`,data:measure(attF),backgroundColor:attCol,borderRadius:3},
+      {label:`Firms at no event (${ctl.size})`,data:measure(ctl),backgroundColor:css('--ctl'),borderRadius:3}]},
+    options:{plugins:{tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmtV(c.raw)}${state.perfirm?' per firm':''}`}}},
+      scales:{x:noGrid,y:{beginAtZero:true,grid:{color:css('--line')},ticks:{callback:v=>fmtV(v)},
+        title:{display:true,text:({meet:'Meetings',opp:'New opportunities',pipe:'New pipeline'})[state.tr]+(state.perfirm?' per firm':'')}}},
+      onHover:hoverCursor, onClick:onBar((d,i)=>applyClick({trend:{kind:'month',month:MONTHS[i],group:d?'ctl':'att',measure:state.tr}}))},
+    plugins:[evLines(mLabels,(ch,e)=>{ const i=MONTHS.indexOf(mkey(e.t)); if(i<0) return null;
+      const d=new Date(e.t), days=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+1,0)).getUTCDate();
+      const x0=ch.scales.x.getPixelForValue(i), w=ch.scales.x.width/MONTHS.length; return x0 - w/2 + w*(d.getUTCDate()-.5)/days; })]});
+
+  // cumulative pipeline around event
+  const W=M.W;
+  mk('t-cum',{type:'line',data:{datasets:scope.map(x=>{
+      const os = M.OPPS.filter(o=>x.firms.has(o.firm_id) && o.t>=x.e.t-W*DAY && o.t<=x.e.t+W*DAY).map(o=>({d:(o.t-x.e.t)/DAY,a:o.amount})).sort((a,b)=>a.d-b.d);
+      let c=0; const pts=[{x:-W,y:0}]; os.forEach(o=>{ c+=o.a; pts.push({x:o.d,y:c}); }); pts.push({x:W,y:c});
+      return {label:SHORT[x.id],data:pts,stepped:true,borderColor:evc(x.id),backgroundColor:evc(x.id),borderWidth:2,pointRadius:0,pointHitRadius:6}; })},
+    options:{parsing:false,plugins:{tooltip:{callbacks:{title:c=>`Day ${Math.round(c[0].raw.x)}`,label:c=>`${c.dataset.label}: ${money(c.raw.y)} cumulative`}}},
+      scales:{x:{type:'linear',min:-W,max:W,grid:{color:css('--line')},title:{display:true,text:'Days relative to event'}},y:{beginAtZero:true,...yMoney()}},
+      onHover:hoverCursor, onClick:onBar((d,i)=>setEvent(scope[d].id))},
+    plugins:[{id:'zero',afterDatasetsDraw(ch){const px=ch.scales.x.getPixelForValue(0),c=ch.ctx;c.save();c.strokeStyle=css('--ink');c.setLineDash([3,3]);c.beginPath();c.moveTo(px,ch.chartArea.top);c.lineTo(px,ch.chartArea.bottom);c.stroke();c.restore();}}]});
+
+  // stage speed
+  const med = a => { if(!a.length) return null; const s=[...a].sort((x,y)=>x-y), m=s.length>>1; return s.length%2? s[m] : (s[m-1]+s[m])/2; };
+  const days = (os,k) => os.filter(o=>o[k]).map(o=>(ts(o[k])-o.t)/DAY);
+  const groups = scope.map(x=>({lab:SHORT[x.id],os:x.opps,col:evc(x.id)}))
+    .concat([{lab:'Not linked to an event',os:M.OPPS.filter(o=>!M.credit[o.opportunity_id]),col:css('--ctl')}]);
+  const sp = groups.map(g=>({lab:g.lab,col:g.col,dd:days(g.os,'dd_date'),cm:days(g.os,'committed_date')}));
+  mk('t-speed',{type:'bar',data:{labels:sp.map(g=>g.lab),datasets:[
+      {label:'To Due Diligence',data:sp.map(g=>med(g.dd)),backgroundColor:sp.map(g=>g.col),borderRadius:3},
+      {label:'To Committed',data:sp.map(g=>med(g.cm)),backgroundColor:sp.map(g=>g.col+'80'),borderRadius:3}]},
+    options:{indexAxis:'y',plugins:{legend:{labels:{generateLabels:()=>[{text:'To Due Diligence (solid)',fillStyle:css('--muted'),strokeStyle:'transparent',fontColor:css('--muted')},{text:'To Committed (light)',fillStyle:css('--muted')+'80',strokeStyle:'transparent',fontColor:css('--muted')}]}},
+      tooltip:{callbacks:{label:c=>{const g=sp[c.dataIndex],arr=c.datasetIndex?g.cm:g.dd;return c.raw==null?`${c.dataset.label}: none yet`:`${c.dataset.label}: ${Math.round(c.raw)} days median (n=${arr.length})`;}}}},
+      scales:{x:{beginAtZero:true,grid:{color:css('--line')},title:{display:true,text:'Median days from creation'}},
+        y:{grid:{display:false},ticks:{callback:(v,i)=>`${sp[i].lab} (${sp[i].dd.length}/${sp[i].cm.length})`}}},
+      onHover:(e,els)=>{ e.native.target.style.cursor = els.length && els[0].index<scope.length ? 'pointer':'default'; },
+      onClick:onBar((d,i)=>{ if (i<scope.length) setEvent(scope[i].id); })}});
+
+  // purpose mix
+  const PUR=['Fundraising','Due diligence','Follow-up','Relationship'], pc=['--c1','--c3','--c2','--ctl'].map(css);
+  const pre={},post={}; PUR.forEach(p=>{pre[p]=0;post[p]=0;});
+  scope.forEach(x=>meets.filter(m=>x.firms.has(m.firm_id)).forEach(m=>{
+    if (m.t>x.e.t && m.t<=x.e.t+W*DAY) post[m.purpose]++; else if (m.t>=x.e.t-W*DAY && m.t<x.e.t) pre[m.purpose]++; }));
+  const tp=sum(PUR,p=>pre[p])||1, tq=sum(PUR,p=>post[p])||1;
+  mk('t-purpose',{type:'bar',data:{labels:[`Before (${sum(PUR,p=>pre[p])})`,`After (${sum(PUR,p=>post[p])})`],datasets:PUR.map((p,i)=>({label:p,data:[pre[p]/tp,post[p]/tq],counts:[pre[p],post[p]],backgroundColor:pc[i]}))},
+    options:{indexAxis:'y',plugins:{tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${pct(c.raw)} (${c.dataset.counts[c.dataIndex]} meetings)`}}},
+      scales:{x:{stacked:true,max:1,ticks:{callback:v=>pct(v)},grid:{color:css('--line')}},y:{stacked:true,grid:{display:false}}},
+      onHover:hoverCursor, onClick:onBar((d,i)=>applyClick({trend:{kind:'purpose',purpose:PUR[d],when:i?'post':'pre'}}))}});
+
+  // days to first follow-up
+  const B=[['0–14',0,14],['15–30',15,30],['31–60',31,60],['61–90',61,90],['91+',91,9999]].filter(b=>b[1]<=W);
+  const bl=B.map(b=>b[0]).concat(['None']);
+  mk('t-first',{type:'bar',data:{labels:bl,datasets:scope.map(x=>{
+      const cnt=bl.map(()=>0);
+      x.firms.forEach(f=>{ const n=meets.filter(m=>m.firm_id===f && m.t>x.e.t && m.t<=x.e.t+W*DAY).map(m=>(m.t-x.e.t)/DAY).sort((a,b)=>a-b)[0];
+        if(n==null) cnt[cnt.length-1]++; else { const i=B.findIndex(b=>n>=b[1]&&n<=b[2]); cnt[i<0?B.length-1:i]++; } });
+      return {label:SHORT[x.id],data:cnt.map(c=>c/Math.max(x.nFirms,1)),n:cnt,backgroundColor:evc(x.id),borderRadius:3}; })},
+    options:{plugins:{tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${c.dataset.n[c.dataIndex]} firms (${pct(c.raw)})`}}},
+      scales:{x:{grid:{display:false},title:{display:true,text:'Days from event to first meeting'}},y:{beginAtZero:true,ticks:{callback:v=>pct(v)},grid:{color:css('--line')},title:{display:true,text:'Share of attending firms'}}},
+      onHover:hoverCursor, onClick:onBar((d,i)=>{ const id=scope[d].id, b=B[i];
+        applyClick({ev:id, trend: b ? {kind:'first',ev:id,lo:b[1],hi:b[2],lab:b[0]} : {kind:'first',ev:id,none:true}}); })}});
+}
+(function wireTrends(){
+  state.tr ||= 'meet'; if (state.perfirm===undefined) state.perfirm = true; state.bulk ||= false; state.map ||= 'pipe';
+  const pf=document.getElementById('tr-perfirm'), bk=document.getElementById('tr-bulk');
+  pf.checked=state.perfirm; bk.checked=state.bulk;
+  // render() (not just drawTrends) so an active Trends filter is recalculated with the new setting
+  pf.onchange=()=>{state.perfirm=pf.checked; save(); render();};
+  bk.onchange=()=>{state.bulk=bk.checked; save(); render();};
+  document.querySelectorAll('#tr-seg button').forEach(b=>b.onclick=()=>{state.tr=b.dataset.v; save(); render();});
+})();
+
+/* ---------- data details ---------- */
+const STAGES=['Initial Conversation','Follow-up / VDR','Due Diligence','IC / Documentation','Committed'];
+const SH = group(D.stage_history, 'opportunity_id', r => ({...r, t: ts(r.stage_date)}));
+Object.values(SH).forEach(a=>a.sort((x,y)=>x.t-y.t));
+const OPPS_BY_FIRM = group(D.opportunities, 'firm_id');
+const MEET_BY_FIRM = group(D.meetings, 'firm_id');
+const ATT_BY_FIRM = group(D.attendees.filter(a=>a.firm_id), 'firm_id');
+// Firms whose name extends another firm's name by whole words (same rule as DQ7 in build_model.py); both are flagged.
+const SIMILAR = (() => { const byName = new Map(), out = new Set();
+  D.firms.forEach(f => { const n = String(f.firm_name ?? '').trim().split(/\s+/).join(' '); if (n && !byName.has(n)) byName.set(n, f.firm_id); });
+  D.firms.forEach(f => { const w = String(f.firm_name ?? '').trim().split(/\s+/);
+    for (let k = w.length-1; k > 0; k--){ const other = byName.get(w.slice(0,k).join(' '));
+      if (other != null && other !== f.firm_id){ out.add(f.firm_id); out.add(other); break; } } });
+  return out; })();
+const dt = {view:'firms', q:'', att:'all', tier:'', st:'', link:'', sort:{firms:['pipe',-1],opps:['created',-1]}, open:null};
+const evDots = ids => ids.map(id=>`<span class="dot" title="${SHORT_H[id]}" style="background:var(${EVCOL[id]})"></span>`).join(' ');
+// One row per firm for the Data details table, with linked activity and flags for the selected event(s).
+function firmRows(){
+  const scope = M.events.filter(x=>state.ev==='ALL'||x.id===state.ev), w=M.W*DAY;
+  return D.firms.map(f=>{
+    const evs = scope.filter(x=>x.firms.has(f.firm_id));
+    const ms = MEET_BY_FIRM[f.firm_id]||[], all = OPPS_BY_FIRM[f.firm_id]||[], att = ATT_BY_FIRM[f.firm_id]||[];
+    const before = new Set(), after = new Set();
+    evs.forEach(x=>ms.forEach(m=>{ if(m.t>x.e.t&&m.t<=x.e.t+w) after.add(m.meeting_id); else if(m.t>=x.e.t-w&&m.t<x.e.t) before.add(m.meeting_id); }));
+    const linked = [...new Map(evs.flatMap(x=>x.opps.filter(o=>o.firm_id===f.firm_id)).map(o=>[o.opportunity_id,o])).values()];
+    const flags = [];
+    if (evs.length && !after.size) flags.push(['No follow-up','bad']);
+    if (evs.length>1) flags.push(['Multi-event','neutral']);
+    if (f.priority==='Tier 1' && !att.length) flags.push(['Tier 1, no event','warn']);
+    if (all.length && !ms.length) flags.push(['Pipeline, no meetings logged','warn']);
+    if (att.length && att.every(a=>a.attendance_status==='Tentative')) flags.push(['Tentative only','neutral']);
+    if (SIMILAR.has(f.firm_id)) flags.push(['Possible duplicate firm','warn']);
+    if (!f.historical_commitments_usd) flags.push(['New relationship','neutral']);
+    return {f, evs:evs.map(x=>x.id), allEvs:[...new Set(att.map(a=>a.event_id))].sort(), before:before.size, after:after.size,
+      nLinked:linked.length, pipe:sum(linked,o=>o.amount), nAll:all.length, flags};
+  });
+}
+// One row per opportunity for the Data details table, with the events it is linked to.
+function oppRows(){
+  const scope = M.events.filter(x=>state.ev==='ALL'||x.id===state.ev);
+  return D.opportunities.map(o=>{
+    const evs = (M.credit[o.opportunity_id]||[]).filter(id=>scope.some(x=>x.id===id));
+    const lag = evs.length ? Math.min(...evs.map(id=>(o.t-EV[id].t)/DAY)) : null;
+    return {o, f:FIRM[o.firm_id], evs, lag};
+  });
+}
+function sortBy(rows, key, dir, get){ return rows.sort((a,b)=>{ const x=get(a,key), y=get(b,key); return (x>y?1:x<y?-1:0)*dir; }); }
+// Render the Data details tab (firms or opportunities) with search, filters, sorting and the firm timeline.
+function drawDetails(){
+  if (state.tab!=='details') return;
+  document.querySelectorAll('#dt-seg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===dt.view));
+  document.getElementById('dt-f-firms').hidden = dt.view!=='firms';
+  document.getElementById('dt-f-opps').hidden = dt.view!=='opps';
+  const q = dt.q.trim().toLowerCase(), tbl = document.getElementById('dt-tbl');
+  const [sk, sd] = dt.sort[dt.view];
+  let cols, body, n, total;
+  if (dt.view==='firms'){
+    let rows = firmRows(); total=rows.length;
+    rows = rows.filter(r=>(!q || (r.f.firm_name+' '+r.f.firm_id+' '+r.f.segment).toLowerCase().includes(q))
+      && (!dt.tier || r.f.priority===dt.tier)
+      && (dt.att==='all' || (dt.att==='att'&&r.evs.length) || (dt.att==='none'&&!r.allEvs.length) || (dt.att==='flag'&&r.flags.some(x=>x[1]!=='neutral'))));
+    const get = (r,k)=>({name:r.f.firm_name,tier:r.f.priority,seg:r.f.segment,reg:r.f.coverage_region,hist:r.f.historical_commitments_usd,ev:r.evs.length,meet:r.after-r.before,opps:r.nLinked,pipe:r.pipe,flags:r.flags.length})[k];
+    sortBy(rows, sk, sd, get); n=rows.length;
+    cols = [['name','Firm'],['tier','Tier'],['seg','Segment'],['reg','Region'],['hist','Historical commitments','r'],['ev','Events'],['meet','Meetings before → after','r'],['opps','Linked opps','r'],['pipe','Linked pipeline','r'],['flags','Flags']];
+    body = rows.map(r=>`<tr data-firm="${esc(r.f.firm_id)}" tabindex="0" class="${dt.open===r.f.firm_id?'open':''}" aria-expanded="${dt.open===r.f.firm_id}">
+      <td><b>${esc(r.f.firm_name)}</b><div class="ev-meta">${esc(r.f.firm_id)} · ${r.nAll} opps in total</div></td><td>${esc(r.f.priority)}</td><td>${esc(r.f.segment)}</td><td>${esc(r.f.coverage_region)}</td>
+      <td class="r num">${money(r.f.historical_commitments_usd)}</td><td>${r.evs.length?evDots(r.evs):'<span class="ev-meta">–</span>'}</td>
+      <td class="r num">${r.evs.length?`${r.before} → ${r.after}`:'–'}</td><td class="r num">${r.nLinked||'–'}</td><td class="r num">${r.pipe?money(r.pipe):'–'}</td>
+      <td><div class="fl">${r.flags.map(([t,c])=>`<span class="chip ${c}">${t}</span>`).join('')}</div></td></tr>`
+      + (dt.open===r.f.firm_id ? `<tr class="detail"><td colspan="10">${firmTimeline(r.f)}</td></tr>` : '')).join('');
+  } else {
+    let rows = oppRows(); total=rows.length;
+    rows = rows.filter(r=>(!q || (r.o.opportunity_id+' '+r.f.firm_name+' '+r.o.firm_id+' '+r.o.fund_name).toLowerCase().includes(q))
+      && (!dt.st || r.o.status===dt.st) && (!dt.link || (dt.link==='y')===!!r.evs.length));
+    const get = (r,k)=>({id:r.o.opportunity_id,firm:r.f.firm_name,fund:r.o.fund_name,created:r.o.t,amt:r.o.amount,stage:r.o.max_stage_rank,status:r.o.status,ev:r.evs.length,lag:r.lag??9999})[k];
+    sortBy(rows, sk, sd, get); n=rows.length;
+    cols = [['id','Opportunity'],['firm','Firm'],['fund','Fund'],['created','Created','r'],['amt','Amount','r'],['stage','Stage path'],['status','Status'],['ev','Linked event'],['lag','Days after event','r']];
+    body = rows.map(r=>{ const path=(SH[r.o.opportunity_id]||[]).map(s=>`<span class="stg ${s.stage==='Committed'?'c':s.stage==='Declined'?'x':''}" title="${esc(s.stage_date.slice(0,10))}">${esc(s.stage)}</span>`).join('');
+      return `<tr data-firm="${esc(r.o.firm_id)}" data-goto="1" tabindex="0"><td class="mono">${esc(r.o.opportunity_id)}</td><td>${esc(r.f.firm_name)}<div class="ev-meta">${esc(r.f.priority)} · ${esc(r.f.segment)}</div></td><td>${esc(r.o.fund_name)}</td>
+        <td class="r num">${fmtDate(r.o.t)}</td><td class="r num">${money(r.o.amount)}</td><td>${path}</td>
+        <td><span class="chip ${r.o.status==='Committed'?'good':r.o.status==='Declined'?'bad':'neutral'}">${esc(r.o.status)}</span></td>
+        <td>${r.evs.length?evDots(r.evs):'<span class="ev-meta">–</span>'}</td><td class="r num">${r.lag!=null?Math.round(r.lag):'–'}</td></tr>`; }).join('');
+  }
+  tbl.innerHTML = `<thead><tr>${cols.map(([k,l,c])=>`<th class="${c||''}" data-k="${k}" ${k===sk?`aria-sort="${sd>0?'ascending':'descending'}"`:''} tabindex="0">${l}</th>`).join('')}</tr></thead><tbody>${body||`<tr><td colspan="${cols.length}" class="ev-meta">No rows match these filters.</td></tr>`}</tbody>`;
+  document.getElementById('dt-count').textContent = `${n} of ${total} ${dt.view==='firms'?'firms':'opportunities'}`;
+  tbl.querySelectorAll('th').forEach(th=>{ const go=()=>{ const k=th.dataset.k, cur=dt.sort[dt.view]; dt.sort[dt.view]=[k, cur[0]===k? -cur[1] : (['name','tier','seg','reg','id','firm','fund','status','lag'].includes(k)?1:-1)]; drawDetails(); };
+    th.onclick=go; th.onkeydown=e=>{ if(e.key==='Enter'){ e.preventDefault(); go(); } }; });
+  tbl.querySelectorAll('tbody tr[data-firm]').forEach(tr=>{ const go=()=>{ const id=tr.dataset.firm;
+      if (tr.dataset.goto){ dt.view='firms'; dt.q=FIRM[id].firm_name; document.getElementById('dt-q').value=dt.q; dt.open=id; }
+      else dt.open = dt.open===id ? null : id; drawDetails(); };
+    tr.onclick=go; tr.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); go(); } }; });
+}
+// SVG timeline for one firm: events attended (with window bands), meetings and each opportunity's stages.
+function firmTimeline(f){
+  const T0=DATA_T0, T1=(d=>Date.UTC(d.getUTCFullYear(), d.getUTCMonth()+1, 1))(new Date(DATA_T1)), X0=110, X1=780, sx=t=>X0+(t-T0)/(T1-T0)*(X1-X0);
+  const every = Math.max(1, Math.ceil(MONTHS.length/14));   // label at most ~14 months
+  const att = ATT_BY_FIRM[f.firm_id]||[], ms=(MEET_BY_FIRM[f.firm_id]||[]).slice().sort((a,b)=>a.t-b.t), os=(OPPS_BY_FIRM[f.firm_id]||[]).slice().sort((a,b)=>a.t-b.t);
+  const evIds=[...new Set(att.map(a=>a.event_id))].sort();
+  const H = 70 + 22*Math.max(os.length,1) + 20;
+  const pc = {Fundraising:'--c1','Due diligence':'--c3','Follow-up':'--c2',Relationship:'--ctl'};
+  let g='';
+  MONTHS.forEach((t,k)=>{ if (k % every) return; const x=sx(t);
+    g+=`<line x1="${x}" x2="${x}" y1="14" y2="${H-14}" stroke="var(--line)"/><text x="${x+3}" y="${H-2}" font-size="10" fill="var(--muted)">${new Date(t).toLocaleDateString('en-US',{month:'short',timeZone:'UTC'})}</text>`;
+    });
+  const asOf=sx(AS_OF); g+=`<line x1="${asOf}" x2="${asOf}" y1="14" y2="${H-14}" stroke="var(--ink)" stroke-dasharray="2 3"/><text x="${asOf-3}" y="12" font-size="10" text-anchor="end" fill="var(--muted)">as of</text>`;
+  evIds.forEach(id=>{ const e=EV[id], tent=att.filter(a=>a.event_id===id).every(a=>a.attendance_status==='Tentative');
+    g+=`<rect x="${sx(e.t)}" y="18" width="${sx(e.t+M.W*DAY)-sx(e.t)}" height="${H-34}" fill="var(${EVCOL[id]})" opacity=".08"/>`;
+    g+=`<path d="M${sx(e.t)} 22 l7 7 -7 7 -7 -7z" fill="${tent?'var(--surface)':`var(${EVCOL[id]})`}" stroke="var(${EVCOL[id]})" stroke-width="1.5"><title>${esc(e.event_name)}${tent?' (tentative only)':''}</title></path>`; });
+  g+=`<text x="0" y="33" font-size="11" fill="var(--muted)">Events</text><text x="0" y="57" font-size="11" fill="var(--muted)">Meetings</text>`;
+  ms.forEach(m=>{ g+=`<circle cx="${sx(m.t)}" cy="53" r="5" fill="var(${pc[m.purpose]||'--ctl'})"><title>${esc(m.meeting_date.slice(0,10))} · ${esc(m.purpose)} · ${esc(m.meeting_type)} · ${esc(m.internal_attendee)}</title></circle>`; });
+  os.forEach((o,i)=>{ const y=82+22*i, st=SH[o.opportunity_id]||[], last=st.length?st[st.length-1].t:o.t;
+    g+=`<text x="0" y="${y+4}" font-size="11" fill="var(--muted)">${esc(o.opportunity_id)}</text>`;
+    g+=`<line x1="${sx(o.t)}" x2="${sx(last)}" y1="${y}" y2="${y}" stroke="var(--muted)" stroke-width="2"/>`;
+    st.forEach(s=>{ const col=s.stage==='Committed'?'--good':s.stage==='Declined'?'--bad':'--accent', r=3+STAGES.indexOf(s.stage);
+      g+=`<circle cx="${sx(s.t)}" cy="${y}" r="${Math.max(r,3)}" fill="var(${col})"><title>${esc(o.opportunity_id)} · ${esc(s.stage)} · ${esc(s.stage_date.slice(0,10))} · ${money(o.amount)}</title></circle>`; });
+    g+=`<text x="${Math.min(sx(last)+8,X1-40)}" y="${y+4}" font-size="10" fill="var(--muted)">${money(o.amount)}</text>`; });
+  if (!os.length) g+=`<text x="${X0}" y="86" font-size="11" fill="var(--muted)">No opportunities</text>`;
+  const items = [
+    ...evIds.map(id=>({t:EV[id].t,k:'Event',s:`${EV[id].event_name} · ${att.filter(a=>a.event_id===id).map(a=>`${a.contact_title} (${a.attendance_status})`).join(', ')}`})),
+    ...ms.map(m=>({t:m.t,k:'Meeting',s:`${m.purpose} · ${m.meeting_type} · ${m.internal_attendee}`})),
+    ...os.flatMap(o=>(SH[o.opportunity_id]||[]).map(s=>({t:s.t,k:'Opportunity',s:`${o.opportunity_id} ${o.fund_name} ${money(o.amount)} → ${s.stage}`})))
+  ].sort((a,b)=>a.t-b.t);
+  return `<div class="eyebrow" style="margin-bottom:6px">${esc(f.firm_name)} · ${esc(f.priority)} ${esc(f.segment)} · ${esc(f.coverage_region)} · shaded band = ${M.W}-day window after each event</div>
+    <div class="tbl-wrap"><svg class="tl-svg" viewBox="0 0 800 ${H}" role="img" aria-label="Timeline for ${esc(f.firm_name)}">${g}</svg></div>
+    <div class="tl-list">${items.map(i=>`<span class="d">${new Date(i.t).toISOString().slice(0,10)}</span><span>${i.k}</span><span>${esc(i.s)}</span>`).join('')||'<span class="ev-meta">No activity recorded.</span>'}</div>`;
+}
+(function wireDetails(){
+  document.querySelectorAll('#dt-seg button').forEach(b=>b.onclick=()=>{dt.view=b.dataset.v; drawDetails();});
+  const bind=(id,key,ev='change')=>{ const el=document.getElementById(id); el.addEventListener(ev,()=>{dt[key]=el.value; drawDetails();}); };
+  bind('dt-q','q','input'); bind('dt-att','att'); bind('dt-tier','tier'); bind('dt-st','st'); bind('dt-link','link');
+})();
+
+/* ---------- data quality ---------- */
+const SEV = {DQ12:'High',DQ13:'Medium',DQ14:'Medium',DQ15:'Medium',DQ3:'High',DQ5:'High',DQ10:'High',DQ1:'Medium',DQ2:'Medium',DQ4:'Medium',DQ6:'Low',DQ9:'Medium',DQ7:'Medium',DQ8:'Low',DQ11:'Low'};
+function drawQuality(){
+  if (state.tab!=='quality' || drawQuality.done) return; drawQuality.done=true;
+  const I=D.dq_impact, sevC={High:'bad',Medium:'warn',Low:'neutral'};
+  document.getElementById('dq-kpis').innerHTML = [
+    ['Issues logged', D.dq_log.length, `${D.dq_log.filter(r=>SEV[r.rule]==='High').length} high severity`],
+    ...I.rows.map(r=>[esc(r.table.replace(/_/g,' ')), `${r.raw} → ${r.clean}`, r.raw===r.clean?'No rows removed':`${r.raw-r.clean} row${r.raw-r.clean===1?'':'s'} removed`])
+  ].map(([l,v,d])=>`<div class="kpi"><div class="eyebrow">${l}</div><div class="v">${v}</div><div class="d">${d}</div></div>`).join('');
+  document.getElementById('dq-tbl').innerHTML = `<thead><tr><th>Rule</th><th>Severity</th><th>Table</th><th>Issue</th><th>How it was handled</th><th class="r">Affected</th></tr></thead><tbody>`+
+    D.dq_log.map(r=>{ const sv = SEV[r.rule] || 'Medium'; return `<tr><td class="mono">${esc(r.rule)}</td><td><span class="chip ${sevC[sv]}">${sv}</span></td><td class="mono">${esc(r.table)}</td><td>${esc(r.issue)}</td><td>${esc(r.action)}</td><td class="r num">${r.rows} ${(r.rule==='DQ10'||r.table==='firms')?'firm':'row'}${r.rows===1?'':'s'}</td></tr>`; }).join('')+`</tbody>`;
+  const lab = k => { const id = k.split(' ')[0]; return esc(SHORT[id] ? SHORT[id] + k.slice(id.length) : k); };
+  document.getElementById('dq-impact').innerHTML = `<thead><tr><th>KPI</th><th class="r">Raw files</th><th class="r">Cleaned</th><th class="r">Change</th></tr></thead><tbody>`+
+    I.kpis.map(r=>{ const isM=/\$/.test(r.kpi), d=r.clean-r.raw, f=isM?money:int;
+      return `<tr><td>${lab(r.kpi)}</td><td class="r num">${f(r.raw)}</td><td class="r num">${f(r.clean)}</td><td class="r num">${d? `<span class="chip warn">${d>0?'+':'−'}${f(Math.abs(d))}</span>`:'<span class="ev-meta">none</span>'}</td></tr>`; }).join('')+`</tbody>`;
+}
+
+/* ---------- assumptions ---------- */
+// Data-driven sentences for the Assumptions tab.
+function preGap(){
+  if (!D.meetings.length) return '';
+  const first = Math.min(...D.meetings.map(m=>m.t));
+  const hit = M.events.filter(x=>x.e.t - M.W*DAY < first).map(x=>SHORT_H[x.id]);
+  return hit.length ? ` For ${hit.join(' and ')}, part of the ${M.W}-day "before" period falls before the meeting data starts (${fmtDate(first)}), which can understate "before".` : '';
+}
+function lastObserved(){
+  if (!D.events.length) return '';
+  const last = D.events.reduce((a,b)=>b.t>a.t?b:a), days = Math.floor((AS_OF-last.t)/DAY);
+  return days>=0 ? ` ${SHORT_H[last.event_id]}, the latest event, is fully observed for windows up to ${days} days.` : '';
+}
+function drawAssumptions(){
+  if (state.tab!=='assumptions') return;
+  const A = [
+    ['Linking outcomes to events', [
+      `An opportunity is linked to an event when a firm that attended opens it within the window after the event (currently <b>${M.W} days</b>, adjustable from 15 to 180). The opportunity's created date decides the link, not later stage changes.`,
+      'Meetings are linked the same way: a meeting by an attending firm inside the window counts as follow-up.',
+      'When a firm attended more than one event, each event gets full credit for the opportunity. Portfolio totals count each opportunity once. Opportunities credited to two events are counted and shown.',
+      'This is association, not attribution. The data has no field saying which event sourced an opportunity.']],
+    ['Attendance', [
+      `Only <b>Confirmed</b> attendees count by default${state.tent?' (Tentative is currently included)':''}. The toggle adds Tentative contacts, since the data cannot show whether they came.`,
+      'A firm attended an event if at least one qualifying contact attended. Contact seniority is shown but not weighted.',
+      'The attendee with no firm (A9998) is left out of firm-level figures.']],
+    ['Comparison groups', [
+      `Firms at no event are the ${M.control.size} firms with no attendance record at any event, under any status. They are compared over the same calendar windows as attendees.`,
+      `Before vs after uses the same number of days on each side of the event for the same firms.${preGap()}`,
+      'None of the comparison firms has a logged meeting, so their records may be less complete. Treat the comparison as a direction, not a measured effect.']],
+    ['Pipeline and money', [
+      'Pipeline is the opportunity amount at creation. Amounts never change across stages in this data.',
+      'Headline pipeline counts every opportunity created, including those later declined. The committed / open / declined split is always shown beside it.',
+      'Event cost is the full listed cost. Staff time, travel and opportunity cost are not included because they are not in the data.',
+      'Historical commitments describe the relationship before 2026 and are used only for context.']],
+    ['Dates and status', [
+      `Everything is measured as of <b>${D.as_of}</b>. Stage dates after that date are treated as not yet happened.`,
+      'An opportunity is Committed or Declined if that is its latest stage; otherwise it is Open. "Reached DD" means it reached Due Diligence or later.',
+      'When the same stage is logged twice in a row, the first date is kept as the date it entered that stage.',
+      `A window is "fully observed" when event date + window is on or before ${D.as_of}. ${lastObserved()}`]],
+    ['Scope', [
+      'Rows with impossible values (a missing or negative amount, an unknown stage or status, an unknown firm or event) are set aside, not silently dropped. Each one is listed on the Data quality tab.',
+      'Three events is a very small sample. Differences between events are directional and should not be treated as statistically significant.',
+      'The data is synthetic and was created for this assessment.']]
+  ];
+  document.getElementById('as-grid').innerHTML = A.map(([h,l])=>`<div class="card"><h3>${h}</h3><ul class="as-list">${l.map(x=>`<li>${x}</li>`).join('')}</ul></div>`).join('');
+  const MET = [
+    ['Pipeline per $1 of cost','Headline efficiency measure.','Linked new pipeline ÷ event cost'],
+    ['Linked new pipeline','Value of opportunities opened by attending firms inside the window.','Σ amount of linked opportunities'],
+    ['Cost per attending firm','What it cost to put one firm in the room.','Event cost ÷ attending firms'],
+    ['Follow-up rate ("Met after")','Share of attending firms with at least one meeting inside the window.','Firms with ≥1 meeting ÷ attending firms'],
+    ['Funnel','Attending firms reaching each step inside the window.','Attended → met after → new opp → reached DD → committed'],
+    ['Opportunity rate','Share of a group of firms that opened an opportunity inside the window. Used for attendees vs firms at no event.','Firms with ≥1 new opp ÷ firms in group'],
+    ['Before vs after','Same firms, same number of days either side of the event.','Count in (event − W, event) vs (event, event + W]'],
+    ['Days to first follow-up','Days from event to an attending firm\'s next meeting.','min(meeting date − event date), meetings inside window'],
+    ['Stage speed','Median days from creation to reaching Due Diligence or Committed.','median(stage date − created date)'],
+    ['Committed share','How much linked pipeline has already committed.','Committed $ ÷ linked pipeline $']
+  ];
+  document.getElementById('as-metrics').innerHTML = `<thead><tr><th>Metric</th><th>What it tells you</th><th>Calculation</th></tr></thead><tbody>`+
+    MET.map(r=>`<tr><td><b>${r[0]}</b></td><td>${r[1]}</td><td class="mono">${r[2]}</td></tr>`).join('')+`</tbody>`;
+}
+
+/* ---------- dictionary ---------- */
+const DICT = [
+  ['events.csv','One row per investor event. Grain: event.', [
+    ['event_id','text','Primary key','E001'],['event_name','text','Event name','Global Alternatives Summit'],['event_date','date','Day the event was held','2026-03-12'],
+    ['event_type','text','Conference or Hospitality','Conference'],['location','text','Host city; used to place map pins','New York'],['cost_usd','integer','Total event cost in USD','420000']]],
+  ['firms.csv','One row per investor firm. Grain: firm.', [
+    ['firm_id','text','Primary key','F001'],['firm_name','text','Firm name. F028 "Investor Firm 08 Holdings" may duplicate F008','Investor Firm 01'],
+    ['segment','text','Investor type: Pension, Insurance, Asset Manager, Family Office, Foundation, Sovereign Wealth','Pension'],
+    ['priority','text','Relationship tier, Tier 1 highest','Tier 1'],['historical_commitments_usd','integer','Capital committed before this period; 0 = new relationship','75000000'],
+    ['coverage_region','text','Americas, EMEA or APAC. No city or address','APAC']]],
+  ['event_attendees.csv','One row per contact at an event. Grain: contact × event.', [
+    ['attendance_id','text','Row ID (A0011 appears twice)','A0001'],['event_id','text','Foreign key to events','E001'],['firm_id','text','Foreign key to firms; blank for A9998','F032'],
+    ['contact_name','text','Anonymised contact','Contact 001'],['contact_title','text','Seniority: CIO, Managing Director, Director, Principal, Investment Manager','CIO'],
+    ['attendance_status','text','Confirmed or Tentative','Confirmed']]],
+  ['meetings.csv','One row per logged meeting with a firm. Grain: meeting.', [
+    ['meeting_id','text','Primary key','M0001'],['firm_id','text','Foreign key to firms','F023'],['meeting_date','date','Meeting date','2026-04-21'],
+    ['meeting_type','text','In Person, Video or Phone','Video'],['internal_attendee','text','Our side: Senior Partner, Coverage A/B/C','Senior Partner'],
+    ['purpose','text','Relationship, Fundraising, Due diligence or Follow-up','Relationship']]],
+  ['opportunity_stage_history.csv','One row per stage change. Grain: opportunity × stage entry.', [
+    ['opportunity_id','text','Opportunity ID; not unique per row','O0001'],['firm_id','text','Foreign key to firms','F026'],['fund_name','text','Fund Alpha, Beta, Gamma, Credit or Secondaries Strategy','Fund Beta'],
+    ['created_date','date','Day the opportunity was opened; drives the event link','2026-07-06'],['stage_date','date','Day it entered this stage','2026-07-24'],
+    ['stage','text','Initial Conversation → Follow-up / VDR → Due Diligence → IC / Documentation → Committed, or Declined','Due Diligence'],
+    ['opportunity_amount_usd','number','Ticket size in USD; constant per opportunity','40000000']]],
+  ['opportunities (derived)','Built in build_model.py: one row per opportunity after cleaning. Grain: opportunity.', [
+    ['max_stage','text','Furthest stage reached, ignoring Declined','IC / Documentation'],['status','text','Committed, Declined or Open, from the latest stage','Open'],
+    ['dd_date','date','First date at Due Diligence, if reached','2026-08-21'],['committed_date','date','Date Committed, if reached','2026-05-19'],
+    ['linked events','derived','Events the firm attended where created_date falls inside the window','E001']]]
+];
+function drawDictionary(){
+  if (state.tab!=='dictionary') return;
+  document.getElementById('dict').innerHTML = DICT.map(([t,d,rows])=>`<div class="card dict-card" style="margin-top:20px"><h3><span class="mono">${t}</span></h3><p class="sub">${d}</p>
+    <div class="tbl-wrap"><table class="static"><thead><tr><th>Column</th><th>Type</th><th>Meaning</th><th>Example</th></tr></thead><tbody>${rows.map(r=>`<tr><td class="mono">${r[0]}</td><td>${r[1]}</td><td>${esc(r[2])}</td><td class="mono">${esc(r[3])}</td></tr>`).join('')}</tbody></table></div></div>`).join('');
+  const B=[['EVENTS',20,20],['EVENT_ATTENDEES',290,20],['FIRMS',290,150],['MEETINGS',560,90],['OPP_STAGE_HISTORY',560,170]], bw=190, bh=44;
+  const P=Object.fromEntries(B.map(([n,x,y])=>[n,{x,y}]));
+  const ln=(a,b,lab,ax,ay,bx,by)=>`<line x1="${ax}" y1="${ay}" x2="${bx}" y2="${by}" stroke="var(--muted)" stroke-width="1.5"/><text x="${(ax+bx)/2+(ax===bx?8:0)}" y="${(ay+by)/2-6}" text-anchor="${ax===bx?'start':'middle'}" font-size="11" fill="var(--muted)" paint-order="stroke" stroke="var(--surface)" stroke-width="4">${lab}</text>`;
+  document.getElementById('er').innerHTML =
+    ln('','', 'event_id', P.EVENTS.x+bw, 42, P.EVENT_ATTENDEES.x, 42)+
+    ln('','', 'firm_id', 385, 64, 385, 150)+
+    ln('','', 'firm_id', P.FIRMS.x+bw, 165, P.MEETINGS.x, 112)+
+    ln('','', 'firm_id', P.FIRMS.x+bw, 180, P.OPP_STAGE_HISTORY.x, 192)+
+    `<path d="M115 64 V210 H285" fill="none" stroke="var(--accent)" stroke-dasharray="4 4" stroke-width="1.5"/><text x="122" y="204" font-size="11" fill="var(--accent)">linked by date through the window</text>`+
+    B.map(([n,x,y])=>`<rect x="${x}" y="${y}" width="${bw}" height="${bh}" rx="6" fill="var(--surface)" stroke="var(--line)"/><text x="${x+bw/2}" y="${y+27}" text-anchor="middle" font-size="13" font-weight="600" fill="var(--ink)">${n}</text>`).join('');
+}
+
+/* ---------- render ---------- */
+function render(){
+  M = compute(state.W, state.tent, resolveXF(state.W, state.tent)); renderChips();
+  win.value=state.W; winOut.textContent = state.W+' days'; tent.checked=state.tent;
+  evSeg.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.v===state.ev));
+  renderSummary(); drawCharts(); drawMap(); drawTrends(); drawDetails(); drawAssumptions();
+}
+const redraw=()=>{drawCharts();drawMap();drawTrends();drawDetails();drawDictionary();};
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', redraw);
+new MutationObserver(redraw).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+window.__irModel = () => M;  // used by verify_dashboard.py
+// Read-only test hook for tests/test_dashboard.py: the page's own functions, so tests exercise the shipped code.
+window.__irTest = Object.freeze({compute, resolveXF, trendFirms, applyClick, setEvent, restoreState, render,
+  money, pct, int, perDollar, esc, ts, mkey, SHORT, EVCOL, CITY, REG, REGIONS, MONTHS, SIMILAR: [...SIMILAR],
+  state: () => JSON.parse(JSON.stringify(state)), filters: () => JSON.parse(JSON.stringify(XF))});
+window.__irFilters = () => ({ev:state.ev, ...JSON.parse(JSON.stringify(XF))});
+render(); showTab();
+})();
+</script>

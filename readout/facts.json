@@ -1,0 +1,215 @@
+{
+ "as_of": "26 Oct 2026",
+ "window": 90,
+ "events": [
+  {
+   "id": "E001",
+   "name": "Global Alternatives Summit",
+   "city": "New York",
+   "type": "Conference",
+   "date": "12 Mar 2026",
+   "color": "#2F6DB5",
+   "cost": 420000.0,
+   "firms": 26,
+   "tier1": 9,
+   "cost_per_firm": 16153.846153846154,
+   "met_after": 21,
+   "met_rate": 0.8076923076923077,
+   "no_follow_rate": 0.1923076923076923,
+   "opps": 16,
+   "pipeline": 889000000.0,
+   "ppd": 2116.6666666666665,
+   "committed": 227500000.0,
+   "open": 511500000.0,
+   "declined": 150000000.0,
+   "pre_meetings": 14,
+   "post_meetings": 37,
+   "opp_rate_attendees": 0.4230769230769231,
+   "opp_rate_no_event": 0.7
+  },
+  {
+   "id": "E002",
+   "name": "Investor Leadership Dinner",
+   "city": "London",
+   "type": "Hospitality",
+   "date": "21 May 2026",
+   "color": "#B8761A",
+   "cost": 185000.0,
+   "firms": 25,
+   "tier1": 6,
+   "cost_per_firm": 7400.0,
+   "met_after": 19,
+   "met_rate": 0.76,
+   "no_follow_rate": 0.24,
+   "opps": 15,
+   "pipeline": 402000000.0,
+   "ppd": 2172.972972972973,
+   "committed": 35000000.0,
+   "open": 217000000.0,
+   "declined": 150000000.0,
+   "pre_meetings": 20,
+   "post_meetings": 35,
+   "opp_rate_attendees": 0.4,
+   "opp_rate_no_event": 0.6
+  },
+  {
+   "id": "E003",
+   "name": "Private Markets Forum",
+   "city": "Berlin",
+   "type": "Conference",
+   "date": "16 Jun 2026",
+   "color": "#25897A",
+   "cost": 610000.0,
+   "firms": 19,
+   "tier1": 6,
+   "cost_per_firm": 32105.263157894737,
+   "met_after": 11,
+   "met_rate": 0.5789473684210527,
+   "no_follow_rate": 0.42105263157894735,
+   "opps": 8,
+   "pipeline": 319000000.0,
+   "ppd": 522.9508196721312,
+   "committed": 0.0,
+   "open": 319000000.0,
+   "declined": 0.0,
+   "pre_meetings": 23,
+   "post_meetings": 15,
+   "opp_rate_attendees": 0.3157894736842105,
+   "opp_rate_no_event": 0.5
+  }
+ ],
+ "best": "E002",
+ "worst": "E003",
+ "portfolio": {
+  "cost": 1215000.0,
+  "pipeline": 1506000000.0,
+  "opps": 36,
+  "ppd": 1239.5061728395062,
+  "committed": 262500000.0,
+  "committed_share": 0.17430278884462153,
+  "multi": 3,
+  "attending_firms": 47
+ },
+ "no_event": {
+  "firms": 10,
+  "opps": 24,
+  "meetings": 0,
+  "avg_rate": 0.6
+ },
+ "attendee_rate": 0.38571428571428573,
+ "sensitivity": {
+  "30": {
+   "E001": {
+    "ppd": 702.3809523809524,
+    "observed": true
+   },
+   "E002": {
+    "ppd": 989.1891891891892,
+    "observed": true
+   },
+   "E003": {
+    "ppd": 375.40983606557376,
+    "observed": true
+   }
+  },
+  "60": {
+   "E001": {
+    "ppd": 1654.7619047619048,
+    "observed": true
+   },
+   "E002": {
+    "ppd": 1875.6756756756756,
+    "observed": true
+   },
+   "E003": {
+    "ppd": 522.9508196721312,
+    "observed": true
+   }
+  },
+  "90": {
+   "E001": {
+    "ppd": 2116.6666666666665,
+    "observed": true
+   },
+   "E002": {
+    "ppd": 2172.972972972973,
+    "observed": true
+   },
+   "E003": {
+    "ppd": 522.9508196721312,
+    "observed": true
+   }
+  },
+  "120": {
+   "E001": {
+    "ppd": 3130.9523809523807,
+    "observed": true
+   },
+   "E002": {
+    "ppd": 2172.972972972973,
+    "observed": true
+   },
+   "E003": {
+    "ppd": 522.9508196721312,
+    "observed": true
+   }
+  },
+  "180": {
+   "E001": {
+    "ppd": 4077.3809523809523,
+    "observed": true
+   },
+   "E002": {
+    "ppd": 2172.972972972973,
+    "observed": false
+   },
+   "E003": {
+    "ppd": 522.9508196721312,
+    "observed": false
+   }
+  }
+ },
+ "climbing": "E001",
+ "dq": {
+  "rules": 11,
+  "duplicate_effect": {
+   "E001": 0.0,
+   "E002": 25000000.0,
+   "E003": 0.0
+  }
+ },
+ "narrative": {
+  "title": "Three investor events: results and next steps",
+  "headline": "$1.2M of event spend sits alongside $1.51B of new pipeline from attending firms. London was the most efficient event and Berlin the least. The data shows association, not cause.",
+  "findings": [
+   [
+    "London returned the most pipeline per dollar.",
+    "The Investor Leadership Dinner (hospitality) is associated with $2,173 of new pipeline per $1, at $7K per attending firm. Berlin returned $523 per $1 at $32K per firm."
+   ],
+   [
+    "Follow-up fell after Berlin.",
+    "Meetings rose after New York (14 to 37) and London (20 to 35). They fell after Berlin (23 to 15), and 42% of Berlin's attending firms had no follow-up meeting within 90 days."
+   ],
+   [
+    "We can't yet say the events caused this pipeline.",
+    "Firms that attended no event opened opportunities more often (60% vs 39% for attendees). Those 10 firms have 0 logged meetings but 24 opportunities, so meeting records look incomplete. New York's figure also keeps rising at longer windows ($2,117 at 90 days, $4,077 at 180), which suggests activity unrelated to the event."
+   ]
+  ],
+  "actions": [
+   [
+    "Run the hosted-dinner format again, as a test.",
+    "Hold a second one in another region and track a matched set of firms that were not invited, so the next review can see whether the event made a difference."
+   ],
+   [
+    "Review Berlin before renewing.",
+    "It cost $610K and 42% of attending firms had no follow-up. Set a two-week follow-up target for every attending firm."
+   ],
+   [
+    "Record events so they can be measured.",
+    "Tag each meeting and opportunity with the event that sourced it, confirm who actually attended, and remove duplicate records."
+   ]
+  ],
+  "caveat": "How to read this: an opportunity counts for an event when a firm that attended opens it within 90 days. Firms are invited because they are already engaged, so these figures show what happened alongside the events, not what the events caused. Three events is a small sample.",
+  "method": "90-day window · Confirmed attendees · each opportunity counted once in totals · data as of 26 Oct 2026 · 11 data-quality rules applied (largest effect: $25M removed from London's pipeline) · synthetic assessment data"
+ }
+}
